@@ -25,6 +25,7 @@ class UserInDB(BaseModel):
     age: int
     weight: int
     height: int
+    gender: str
 
 
 class UserInfo(BaseModel):
