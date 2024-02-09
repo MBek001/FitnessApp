@@ -78,12 +78,12 @@ workout_categories = Table(
     Column('category', Enum(CategoryEnum))
 )
 
-subcategories = Table(
-    'subcategory',
+exercises = Table(
+    'exercises',
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('workout_category_id', Integer, ForeignKey('workout_category.id')),
-    Column('subcategory', String)
+    Column('name', String)
 )
 
 user_purchase = Table(
@@ -120,6 +120,7 @@ review = Table(
     'review',
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('exercises_id', Integer, ForeignKey('exercises.id')),
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('rating', Integer),
     Column('comment', Text),
