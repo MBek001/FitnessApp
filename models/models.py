@@ -114,3 +114,13 @@ user_status = Table(
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('status', Enum(StatusEnum))
 )
+
+
+review = Table(
+    'review',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('rating', Integer),
+    Column('comment', Text),
+)
