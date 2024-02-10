@@ -8,3 +8,4 @@ __pycache__/
 neseccery
 src/.env
 migrations/versions
+user_photos
