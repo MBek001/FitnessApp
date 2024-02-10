@@ -71,7 +71,8 @@ users = Table(
     Column('age', Integer),
     Column('weight', Integer),
     Column('height', Integer),
-    Column('gender', Enum(GenderEnum))
+    Column('gender', Enum(GenderEnum)),
+    Column('user_role', String)
 )
 
 user_goal = Table(
