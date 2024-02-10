@@ -46,6 +46,20 @@ class StatusEnum(enum.Enum):
     canceled = 'Canceled'
 
 
+class LanguageEnum(enum.Enum):
+    english = 'English',
+    russian = 'Russian',
+    spanish = 'Spanish',
+    french = 'French',
+    german = 'German',
+    japanese = 'Japanese',
+    chinese = 'Chinese',
+    korean = 'Korean',
+    vietnamese = 'Vietnamese',
+    arabic = 'Arabic',
+    portuguese = 'Portuguese',
+
+
 users = Table(
     'users',
     metadata,
@@ -124,4 +138,25 @@ review = Table(
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('rating', Integer),
     Column('comment', Text),
+)
+
+
+saved_cards = Table(
+    'cards',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('card_holder_name',String),
+    Column('card_number', String),
+    Column('expiry_month', Integer),
+
+)
+
+
+languages = Table(
+    'languages',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('language', Enum(LanguageEnum))
 )
