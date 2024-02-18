@@ -39,3 +39,8 @@ class UserInfo(BaseModel):
 class UserLogin(BaseModel):
     email: str
     password: str
+
+
+class UserUpdate(BaseModel):
+    name: str
+    email: str

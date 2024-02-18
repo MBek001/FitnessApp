@@ -3,7 +3,7 @@ from datetime import datetime
 import enum
 
 from sqlalchemy import Table, MetaData, Column, String, Integer, Text, Boolean, Date, ForeignKey, Float, DECIMAL, Enum, \
-    TIMESTAMP
+    TIMESTAMP, DATETIME
 
 metadata = MetaData()
 
@@ -35,9 +35,15 @@ class CategoryEnum(enum.Enum):
     advanced = 'Advanced',
 
 
-class DurationEnum(enum.Enum):
+class SubDurationEnum(enum.Enum):
     monthly = 'Monthly',
     yearly = 'Yearly'
+
+
+class BookDurationEnum(enum.Enum):
+    one_hour = '1 Hour',
+    two_hours = '2 Hours',
+    three_hours = '3 Hours',
 
 
 class StatusEnum(enum.Enum):
@@ -101,8 +107,8 @@ exercises = Table(
     Column('name', String)
 )
 
-user_purchase = Table(
-    'user_purchase',
+subscription = Table(
+    'subscription',
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('purchase_name', String),
@@ -111,14 +117,14 @@ user_purchase = Table(
 )
 
 
-user_payment = Table(
-    'user_payment',
+user_subscription = Table(
+    'user_subscription',
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('purchase_id', Integer, ForeignKey('user_purchase.id')),
-    Column('duration', Enum(DurationEnum)),
-    Column('created_at', TIMESTAMP, default=datetime.utcnow()),
+    Column('duration', Enum(SubDurationEnum)),
+    Column('created_at', TIMESTAMP, default=datetime.utcnow())
 )
 
 
@@ -131,11 +137,26 @@ user_status = Table(
 )
 
 
+trainer = Table(
+    'trainer',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('experience', Integer),
+    Column('completed',Integer),
+    Column('active_clients', Integer),
+    Column('phone_number', String),
+    Column('rate', Float),
+    Column('description', String)
+)
+
+
 review = Table(
     'review',
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('exercises_id', Integer, ForeignKey('exercises.id')),
+    Column('trainer_id', Integer, ForeignKey('trainer.id')),
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('rating', Integer),
     Column('comment', Text),
@@ -147,9 +168,9 @@ saved_cards = Table(
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('user_id', Integer, ForeignKey('users.id')),
-    Column('card_holder_name',String),
+    Column('card_holder_name', String),
     Column('card_number', String),
-    Column('expiry_month', Integer),
+    Column('expiry_month', Integer),    
 
 )
 
@@ -161,3 +182,17 @@ languages = Table(
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('language', Enum(LanguageEnum))
 )
+
+booked_trainer = Table(
+    'booked_trainer',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('trainer_id', Integer, ForeignKey('trainer.id')),
+    Column('date', DATETIME),
+    Column('duration', Enum(BookDurationEnum))
+)
+
+
+
+
