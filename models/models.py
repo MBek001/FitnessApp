@@ -93,14 +93,6 @@ workout_categories = Table(
     Column('category', Enum(CategoryEnum))
 )
 
-exercises = Table(
-    'exercises',
-    metadata,
-    Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('workout_category_id', Integer, ForeignKey('workout_category.id')),
-    Column('name', String)
-)
-
 user_purchase = Table(
     'user_purchase',
     metadata,
@@ -160,4 +152,20 @@ languages = Table(
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('language', Enum(LanguageEnum))
+)
+
+
+category = Table(
+    'category',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('name', String)
+)
+
+exercises = Table(
+    'exercises',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('category_id', Integer, ForeignKey('category.id')),
+    Column('name', String)
 )

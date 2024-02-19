@@ -7,11 +7,11 @@ from fastapi import Depends, APIRouter, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
 
-from .utils import generate_token
+from .utils import generate_token, verify_token
 from database import get_async_session
 from sqlalchemy import select, insert
 from fastapi import APIRouter
-
+from database import async_session_maker
 from .schemes import UserRegister, UserInDB, UserInfo, UserLogin
 from models.models import users
 
@@ -69,3 +69,14 @@ async def login(user: UserLogin, session: AsyncSession = Depends(get_async_sessi
 #         if user_data.fetchone() is None:
 #             raise HTTPException(status_code=400, detail="Invalid Email address")
 #
+
+async def is_admin(token: dict = Depends(verify_token), session: AsyncSession = Depends(get_async_session)):
+    admin_id = token['user_id']
+    query = select(users).where(users.c.id == admin_id)
+    query = await session.execute(query)
+    query = query.one()
+    await session.close()
+    if query[-1] == 'admin':
+        return {'is_admin': True}
+    else:
+        return {'is_admin': False}
