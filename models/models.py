@@ -66,6 +66,16 @@ class LanguageEnum(enum.Enum):
     portuguese = 'Portuguese',
 
 
+class WeekdaysEnum(enum.Enum):
+    monday = 'Monday',
+    tuesday = 'Tuesday',
+    wednesday = 'Wednesday',
+    thursday = 'Thursday',
+    friday = 'Friday',
+    saturday = 'Saturday',
+    sunday = 'Sunday'
+
+
 users = Table(
     'users',
     metadata,
@@ -78,6 +88,7 @@ users = Table(
     Column('weight', Integer),
     Column('height', Integer),
     Column('gender', Enum(GenderEnum)),
+    Column('is_trainer', Boolean, default=False),
     Column('user_role', String)
 )
 
@@ -122,7 +133,7 @@ user_subscription = Table(
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('user_id', Integer, ForeignKey('users.id')),
-    Column('purchase_id', Integer, ForeignKey('user_purchase.id')),
+    Column('purchase_id', Integer, ForeignKey('subscription.id')),
     Column('duration', Enum(SubDurationEnum)),
     Column('created_at', TIMESTAMP, default=datetime.utcnow())
 )
@@ -189,10 +200,22 @@ booked_trainer = Table(
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('trainer_id', Integer, ForeignKey('trainer.id')),
-    Column('date', DATETIME),
+    Column('date', TIMESTAMP),
     Column('duration', Enum(BookDurationEnum))
 )
 
 
+insights = Table(
+    'insights',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('calories', Float),
+    Column('steps', Integer),
+    Column('time_spent', Float),
+    Column('heartbeat', Integer),
+    Column('day', Enum(WeekdaysEnum)),
+    Column('date', TIMESTAMP)
+)
 
 
