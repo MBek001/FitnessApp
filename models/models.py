@@ -115,7 +115,10 @@ exercises = Table(
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('workout_category_id', Integer, ForeignKey('workout_category.id')),
-    Column('name', String)
+    Column('name', String),
+    Column('video_url', String),
+    Column('date_added', TIMESTAMP),
+    Column('instruction', String)
 )
 
 subscription = Table(
@@ -218,4 +221,12 @@ insights = Table(
     Column('date', TIMESTAMP)
 )
 
-
+workout_plan = Table(
+    'workout_plan',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('exercise', Integer, ForeignKey('exercises.id')),
+    Column('minutes', Integer),
+    Column('calories', Integer)
+)
