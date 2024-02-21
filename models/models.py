@@ -41,9 +41,9 @@ class SubDurationEnum(enum.Enum):
 
 
 class BookDurationEnum(enum.Enum):
+    half_hour = 'Half Hour'
     one_hour = '1 Hour',
     two_hours = '2 Hours',
-    three_hours = '3 Hours',
 
 
 class StatusEnum(enum.Enum):
@@ -172,7 +172,7 @@ review = Table(
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('trainer_id', Integer, ForeignKey('trainer.id')),
     Column('user_id', Integer, ForeignKey('users.id')),
-    Column('rating', Integer),
+    Column('rating', Float),
     Column('comment', Text),
 )
 
