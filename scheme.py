@@ -91,4 +91,9 @@ class WorkoutPlanModel(BaseModel):
     calories: int
 
 
+class ReviewData(BaseModel):
+    trainer_id: int
+    user_id: int
+    rating: int
+    comment: str
 
