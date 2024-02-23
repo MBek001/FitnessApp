@@ -40,12 +40,6 @@ class SubDurationEnum(enum.Enum):
     yearly = 'Yearly'
 
 
-class BookDurationEnum(enum.Enum):
-    half_hour = 'Half Hour'
-    one_hour = '1 Hour',
-    two_hours = '2 Hours',
-
-
 class StatusEnum(enum.Enum):
     active = 'Active',
     expired = 'Expired',
@@ -75,6 +69,10 @@ class WeekdaysEnum(enum.Enum):
     saturday = 'Saturday',
     sunday = 'Sunday'
 
+class BookDurationEnum(enum.Enum):
+    half_hour = 'Half Hour'
+    one_hour = 'One Hour',
+    two_hours = 'Two Hours',
 
 users = Table(
     'users',
@@ -101,6 +99,30 @@ user_goal = Table(
     Column('activity', Enum(ActivityEnum))
 )
 
+
+trainer = Table(
+    'trainer',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('full_name',String),
+    Column('experience', Integer),
+    Column('completed',Integer),
+    Column('active_clients', Integer),
+    Column('phone_number', String),
+    Column('rate', Float),
+    Column('description', String)
+)
+
+
+booked_trainer = Table(
+    'booked_trainer',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('trainer_id', Integer, ForeignKey('trainer.id')),
+    Column('date', TIMESTAMP),
+    Column('duration', Enum(BookDurationEnum))
+)
 
 workout_categories = Table(
     'workout_category',
@@ -151,21 +173,6 @@ user_status = Table(
 )
 
 
-trainer = Table(
-    'trainer',
-    metadata,
-    Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('user_id', Integer, ForeignKey('users.id')),
-    Column('full_name',String),
-    Column('experience', Integer),
-    Column('completed',Integer),
-    Column('active_clients', Integer),
-    Column('phone_number', String),
-    Column('rate', Float),
-    Column('description', String)
-)
-
-
 review = Table(
     'review',
     metadata,
@@ -197,16 +204,6 @@ languages = Table(
     Column('language', Enum(LanguageEnum))
 )
 
-booked_trainer = Table(
-    'booked_trainer',
-    metadata,
-    Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('user_id', Integer, ForeignKey('users.id')),
-    Column('trainer_id', Integer, ForeignKey('trainer.id')),
-    Column('date', TIMESTAMP),
-    Column('duration', Enum(BookDurationEnum))
-)
-
 
 insights = Table(
     'insights',
@@ -230,3 +227,17 @@ workout_plan = Table(
     Column('minutes', Integer),
     Column('calories', Integer)
 )
+
+
+user_payment = Table(
+    'user_payment',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('Trainer_id', Integer, ForeignKey('trainer.id')),
+    Column('amount', Float),
+    Column('payment_method', String),
+    Column('created_at', TIMESTAMP, default=datetime.utcnow())
+)
+
+
