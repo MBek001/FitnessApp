@@ -1,17 +1,20 @@
 
 import os
+import secrets
 from datetime import datetime, date, timedelta
 from typing import List, Union
 
+import aiofiles
+
 from models.models import trainer
-from fastapi import Body
+from fastapi import Body, UploadFile
 
 from sqlalchemy import select, insert,delete
 from sqlalchemy.exc import IntegrityError, NoResultFound, SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import insert, select, update, func, join
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, FileResponse, RedirectResponse
 
 from auth.utils import verify_token
 from database import get_async_session
@@ -304,6 +307,63 @@ async def book_trainer(trainer_id: int, date: str, hour: int, minute: int,
         return " Trainer is available at the selected time."
     else:
         return " Trainer is not available at the selected time."
+
+
+@router.post('/upload-file')
+async def upload_file(
+        uploadfile: UploadFile,
+        session: AsyncSession = Depends(get_async_session),
+        token: dict = Depends(verify_token)
+):
+    user_id = token.get('user_id')
+    result = await session.execute(
+        select(users).where(
+            (users.c.id == user_id)&
+            (users.c.user_role == 'admin')
+        )
+    )
+    if not result.scalar():
+        raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    try:
+        out_file = f'files/{uploadfile.filename}'
+        async with aiofiles.open(out_file, "wb") as f:
+            content = await uploadfile.read()
+            await f.write(content)
+        hashcode = secrets.token_hex(32)
+        query = insert(exercises).values(video_url=out_file, video_hash=hashcode)
+        await session.execute(query)
+        await session.commit()
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail="File not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return {'success': True, 'message': 'Uploaded successfully'}
+
+
+@router.get('/get-file/{hashcode}')
+async def download_file(
+        hashcode: str
+):
+    if hashcode is None:
+        raise HTTPException(status_code=400, detail='Invalid hashcode')
+
+    file_url = f'http://127.0.0.1:8000/main/download-file/{hashcode}'
+    return {'file-link': file_url}
+
+
+@router.get('/download-file/{hashcode}', response_class=RedirectResponse)
+async def download_file(
+        hashcode: str,
+        session: AsyncSession = Depends(get_async_session)
+):
+    if hashcode is None:
+        raise HTTPException(status_code=400, detail='Invalid hashcode')
+
+    query = select(exercises).where(exercises.c.video_hash == hashcode)
+    video__data = await session.execute(query)
+    video_data = video__data.one()
+    return FileResponse(video_data.video_url)
 
 
 app.include_router(register_router, prefix='/auth')
