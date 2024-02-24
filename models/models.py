@@ -29,7 +29,7 @@ class ActivityEnum(enum.Enum):
     beast = 'True Beast'
 
 
-class CategoryEnum(enum.Enum):
+class LevelEnum(enum.Enum):
     beginner = 'Beginner',
     intermediate = 'Intermediate',
     advanced = 'Advanced',
@@ -118,19 +118,28 @@ booked_trainer = Table(
     Column('date', TIMESTAMP),
 )
 
+level = Table(
+    'levels',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('name', Enum(LevelEnum))
+)
 category = Table(
     'category',
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('name', String)
+    Column('level_id', Integer, ForeignKey('levels.id')),
+    Column('name', String),
+    Column('photo_url', String)
 )
 
+
 workout_categories = Table(
-    'user_workout_category',
+    'user_level',
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('user_id', Integer, ForeignKey('users.id')),
-    Column('category_id', Integer, ForeignKey('category.id'))
+    Column('level_id', Integer, ForeignKey('levels.id'))
 )
 
 
@@ -235,4 +244,14 @@ user_payment = Table(
     Column('amount', Float),
     Column('payment_method', String),
     Column('created_at', TIMESTAMP, default=datetime.utcnow())
+)
+
+notification = Table(
+    'notification',
+    metadata,
+Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('news', String),
+    Column('events', String),
+    Column('created_at', TIMESTAMP, default=datetime.utcnow())
+
 )
