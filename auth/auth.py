@@ -2,28 +2,37 @@ import os
 import secrets
 import random
 import json
-
+import requests
 import aiofiles
+import redis
 from sqlalchemy import update
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import NoResultFound
-from fastapi import Depends, APIRouter, HTTPException
+from fastapi import Depends, APIRouter, HTTPException,status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
 
 from .utils import generate_token, verify_token
 from database import get_async_session
-from sqlalchemy import select, insert
+from sqlalchemy import select, insert, update
 from fastapi import APIRouter, UploadFile
 
 from .schemes import UserRegister, UserInDB, UserInfo, UserLogin, UserUpdate
 from models.models import users
 
+from datetime import datetime
+from pydantic import EmailStr
+from config import GOOGLE_CLIENT_ID, GOOGLE_REDIRECT_URL, GOOGLE_CLIENT_SECRET_KEY, REDIS_HOST, REDIS_PORT
+from tasks import send_mail_for_forget_password
+
+from dotenv import load_dotenv
+
+
+load_dotenv()
+redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
 register_router = APIRouter()
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
-
-
 
 
 @register_router.post('/register')
@@ -68,7 +77,6 @@ async def login(user: UserLogin, session: AsyncSession = Depends(get_async_sessi
 
 
 
-
 @register_router.patch('/edit-profile')
 async def edit_profile(
         photo: UploadFile,
@@ -102,5 +110,48 @@ async def edit_profile(
 
 
 
+@register_router.get('/forget-password/{email}')
+async def forget_password(
+        email: EmailStr,
+        session: AsyncSession = Depends(get_async_session)
+):
+    try:
+        user = select(users).where(users.c.email == email)
+        user_data = await session.execute(user)
+        if user_data.fetchone() is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                detail="Invalid Email address")
 
+        code = random.randint(99999, 999999)
+        redis_client.set(f'{email}', json.dumps({'code': code}))
+        send_mail_for_forget_password.delay(email, code)
+        return {"detail": "Check your email"}
+    except Exception as e:
+        raise HTTPException(detail=f'{e}', status_code=status.HTTP_400_BAD_REQUEST)
+
+
+@register_router.post('/reset-password/{email}')
+async def reset_password(
+        email: str,
+        code: int,
+        new_password: str,
+        confirm_password: str,
+        session: AsyncSession = Depends(get_async_session)
+):
+
+    try:
+        if new_password != confirm_password:
+            raise HTTPException(detail="Passwords do not match!", status_code=status.HTTP_400_BAD_REQUEST)
+
+        data = redis_client.get(email)
+        js_data = json.loads(data)
+
+        if js_data['code'] == code:
+            query = update(users).where(users.c.email == email).values({users.c.password: pwd_context.hash(new_password)})
+            await session.execute(query)
+            await session.commit()
+
+            return {"detail": "Password changed successfully"}
+    except Exception as e:
+        raise HTTPException(detail=f'{e}', status_code=status.HTTP_400_BAD_REQUEST)
 
