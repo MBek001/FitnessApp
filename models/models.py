@@ -70,12 +70,6 @@ class WeekdaysEnum(enum.Enum):
     sunday = 'Sunday'
 
 
-class BookDurationEnum(enum.Enum):
-    half_hour = 'Half Hour'
-    one_hour = 'One Hour',
-    two_hours = 'Two Hours',
-
-
 users = Table(
     'users',
     metadata,
@@ -89,7 +83,7 @@ users = Table(
     Column('height', Integer),
     Column('gender', Enum(GenderEnum)),
     Column('is_trainer', Boolean, default=False),
-    Column('user_role', String)
+    Column('is_admin', Boolean, default=False)
 )
 
 user_goal = Table(
@@ -109,6 +103,7 @@ trainer = Table(
     Column('experience', Integer),
     Column('completed', Integer),
     Column('active_clients', Integer),
+    Column('cost',Float),
     Column('phone_number', String),
     Column('rate', Float),
     Column('description', String)
@@ -121,7 +116,6 @@ booked_trainer = Table(
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('trainer_id', Integer, ForeignKey('trainer.id')),
     Column('date', TIMESTAMP),
-    Column('duration', Enum(BookDurationEnum))
 )
 
 category = Table(
@@ -138,7 +132,6 @@ workout_categories = Table(
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('category_id', Integer, ForeignKey('category.id'))
 )
-
 
 
 exercises = Table(
@@ -196,6 +189,7 @@ saved_cards = Table(
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('card_holder_name', String),
     Column('card_number', String),
+    Column('balance', Integer, default=1000),
     Column('expiry_month', Integer),
 
 )
@@ -236,7 +230,8 @@ user_payment = Table(
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('user_id', Integer, ForeignKey('users.id')),
-    Column('Trainer_id', Integer, ForeignKey('trainer.id')),
+    Column('card_id', Integer, ForeignKey('cards.id')),
+    Column('trainer_id', Integer, ForeignKey('trainer.id')),
     Column('amount', Float),
     Column('payment_method', String),
     Column('created_at', TIMESTAMP, default=datetime.utcnow())
