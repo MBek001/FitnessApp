@@ -186,7 +186,8 @@ saved_cards = Table(
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('card_holder_name', String),
     Column('card_number', String),
-    Column('expiry_month', Integer),    
+    Column('expiry_month', Integer),
+    Column('balance', Integer, default=1000)
 
 )
 
@@ -232,6 +233,7 @@ user_payment = Table(
     Column('Trainer_id', Integer, ForeignKey('trainer.id')),
     Column('amount', Float),
     Column('payment_method', String),
+    Column('card_id', Integer, ForeignKey('cards.id')),
     Column('created_at', TIMESTAMP, default=datetime.utcnow())
 )
 
