@@ -150,6 +150,7 @@ exercises = Table(
     Column('category_id', Integer, ForeignKey('category.id')),
     Column('name', String),
     Column('video_url', String),
+    Column('video_hash', String),
     Column('date_added', TIMESTAMP),
     Column('instruction', String)
 )
