@@ -77,7 +77,6 @@ async def login(user: UserLogin, session: AsyncSession = Depends(get_async_sessi
 
 
 
-
 @register_router.patch('/edit-profile')
 async def edit_profile(
         photo: UploadFile,
@@ -108,6 +107,7 @@ async def edit_profile(
     except Exception as e:
         raise HTTPException(status_code=400, detail=e)
     return {'success': True, 'message': 'Profile updated successfully!'}
+
 
 
 @register_router.get('/forget-password/{email}')

@@ -30,7 +30,6 @@ from auth.utils import verify_token
 router = APIRouter()
 
 
-
 @router.get('/')
 async def homepage(token: dict = Depends(verify_token),
                    session: AsyncSession = Depends(get_async_session)):
@@ -97,6 +96,7 @@ async def homepage(token: dict = Depends(verify_token),
 def __init__(self, session):
     self.session = session
 
+
 @router.post("/reviews/")
 async def review_exercise(
         trainer_id: int = Body(...),
@@ -154,6 +154,7 @@ async def delete_comment(comment_id: int, token: dict = Depends(verify_token), s
         raise HTTPException(detail='Not found!!!', status_code=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         raise HTTPException(detail=f'{e}', status_code=status.HTTP_400_BAD_REQUEST)
+
 
 @router.get('/reviews-view/')
 async def get_comment(trainer_id: int,
@@ -221,6 +222,88 @@ async def get_comment(trainer_id: int,
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.get("/check-trainer-availability", response_model=List[str])
+async def check_trainer_availability(trainer_id: int, date: str,
+                                     session: AsyncSession = Depends(get_async_session),
+                                     token: dict = Depends(verify_token)):
+    if token is None:
+        raise HTTPException(status_code=403, detail='Forbidden')
+
+    selected_date = datetime.strptime(date, "%Y-%m-%d")
+    print('select date', selected_date)
+
+    start_time = datetime.combine(selected_date, datetime.min.time()) + timedelta(hours=9)
+    end_time = datetime.combine(selected_date, datetime.min.time()) + timedelta(hours=23, minutes=30)
+
+    available_time = []
+    current_time = start_time
+    while current_time < end_time:
+        if current_time.time() < datetime.strptime("12:00", "%H:%M").time() or current_time.time() >= datetime.strptime(
+                "14:00", "%H:%M").time():
+            available_time.append(current_time)
+        current_time += timedelta(minutes=30)
+
+    query = select(booked_trainer.c.date).where(
+        (booked_trainer.c.trainer_id == trainer_id) &
+        (func.date(booked_trainer.c.date) == selected_date)
+    )
+    result = await session.execute(query)
+    booked_slots =result.scalars().all()
+
+    free_time = [
+        taym.strftime("%H:%M")
+        for taym in available_time
+        if taym not in booked_slots
+    ]
+
+    return free_time
+
+
+from fastapi import HTTPException
+
+@router.get("/book_trainer", response_model=str)
+async def book_trainer(trainer_id: int, date: str, hour: int, minute: int,
+                       session: AsyncSession = Depends(get_async_session),
+                       token: dict = Depends(verify_token)):
+    if token is None:
+        raise HTTPException(status_code=403, detail='Forbidden')
+
+    selected_date_time = datetime.strptime(f"{date} {hour}:{minute}:00", "%Y-%m-%d %H:%M:00")
+
+    start_time = datetime.combine(selected_date_time.date(), datetime.min.time()) + timedelta(hours=9)
+    end_time = datetime.combine(selected_date_time.date(), datetime.min.time()) + timedelta(hours=23, minutes=30)
+
+    available_time = []
+    current_time = start_time
+    while current_time < end_time:
+        if current_time.time() < datetime.strptime("12:00", "%H:%M").time() or current_time.time() >= datetime.strptime(
+                "14:00", "%H:%M").time():
+            available_time.append(current_time)
+        current_time += timedelta(minutes=30)
+
+    query = select(booked_trainer.c.date).where(
+        (booked_trainer.c.trainer_id == trainer_id) &
+        (func.date(booked_trainer.c.date) == selected_date_time.date())
+    )
+    result = await session.execute(query)
+    booked_slots = result.scalars().all()
+
+    free_time = [
+        taym.strftime("%H:%M")
+        for taym in available_time
+        if taym not in booked_slots
+    ]
+    count = False
+    for i in free_time:
+        if selected_date_time.time().strftime("%H:%M") == i:
+            count = True
+
+    if count:
+        return " Trainer is available at the selected time."
+    else:
+        return " Trainer is not available at the selected time."
 
 
 app.include_router(register_router, prefix='/auth')
