@@ -1,8 +1,11 @@
+import enum
+
 from pydantic import BaseModel
 from typing import Optional
-from enum import Enum
 from datetime import datetime
-from models.models import GenderEnum, GoalEnum, CategoryEnum, ActivityEnum, SubDurationEnum, StatusEnum, LanguageEnum, WeekdaysEnum, BookDurationEnum
+from models.models import (GenderEnum, GoalEnum, CategoryEnum, ActivityEnum, SubDurationEnum, StatusEnum, LanguageEnum,
+                           WeekdaysEnum)
+
 
 
 class UserModel(BaseModel):
@@ -72,11 +75,6 @@ class LanguageModel(BaseModel):
     language: LanguageEnum
 
 
-class BookedTrainerModel(BaseModel):
-    date: datetime
-    duration: BookDurationEnum
-
-
 class InsightsModel(BaseModel):
     calories: float
     steps: int
@@ -97,3 +95,15 @@ class ReviewData(BaseModel):
     rating: int
     comment: str
 
+
+class TrainerAvailable(BaseModel):
+    trainer_id: int
+    date: datetime
+    hour: int
+    minutes: int
+
+
+class BookDurationEnumScheme(enum.Enum):
+    half_hour: int
+    one_hour: int
+    two_hours: int

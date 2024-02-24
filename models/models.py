@@ -69,10 +69,6 @@ class WeekdaysEnum(enum.Enum):
     saturday = 'Saturday',
     sunday = 'Sunday'
 
-class BookDurationEnum(enum.Enum):
-    half_hour = 'Half Hour'
-    one_hour = 'One Hour',
-    two_hours = 'Two Hours',
 
 users = Table(
     'users',
@@ -121,7 +117,6 @@ booked_trainer = Table(
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('trainer_id', Integer, ForeignKey('trainer.id')),
     Column('date', TIMESTAMP),
-    Column('duration', Enum(BookDurationEnum))
 )
 
 workout_categories = Table(
