@@ -5,6 +5,7 @@ import json
 import requests
 import aiofiles
 import redis
+import jwt
 from sqlalchemy import update
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +16,7 @@ from passlib.context import CryptContext
 
 from .utils import generate_token, verify_token
 from database import get_async_session
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select, insert, update
 from fastapi import APIRouter, UploadFile
 
@@ -33,7 +35,7 @@ load_dotenv()
 redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
 register_router = APIRouter()
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
-
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
 
 @register_router.post('/register')
 async def register(
@@ -155,3 +157,57 @@ async def reset_password(
     except Exception as e:
         raise HTTPException(detail=f'{e}', status_code=status.HTTP_400_BAD_REQUEST)
 
+
+@register_router.get("/login/google")
+async def login_google():
+    return {
+        "url": f"https://accounts.google.com/o/oauth2/auth?response_type=code&client_id={GOOGLE_CLIENT_ID}&redirect_uri={GOOGLE_REDIRECT_URL}&scope=openid%20profile%20email&access_type=offline"
+    }
+
+
+@register_router.get("/token")
+async def get_token(token: str = Depends(oauth2_scheme)):
+    return jwt.decode(token, GOOGLE_CLIENT_SECRET_KEY, algorithms=["HS256"])
+
+
+@register_router.get("/google")
+async def auth_google(code: str, session: AsyncSession = Depends(get_async_session)):
+    token_url = "https://accounts.google.com/o/oauth2/token"
+    data = {
+        "code": code,
+        "client_id": GOOGLE_CLIENT_ID,
+        "client_secret": GOOGLE_CLIENT_SECRET_KEY,
+        "redirect_uri": GOOGLE_REDIRECT_URL,
+        "grant_type": "authorization_code",
+    }
+    response = requests.post(token_url, data=data)
+    access_token = response.json().get("access_token")
+    user_info = requests.get("https://www.googleapis.com/oauth2/v1/userinfo", headers={"Authorization": f"Bearer {access_token}"})
+
+    user_data = {
+        'name': user_info.json().get('given_name'),
+        'email': user_info.json().get('email'),
+        'password': pwd_context.hash(user_info.json().get('email'))
+    }
+    email = user_data['email']
+
+    user_exist_query = select(users).where(users.c.email == email)
+    user_exist_data = await session.execute(user_exist_query)
+    try:
+        result = user_exist_data.scalars().one()
+    except NoResultFound:
+        try:
+            query = insert(users).values(**user_data)
+            await session.execute(query)
+
+            user_data = await session.execute(select(users).where(users.c.email == email))
+            user_data = user_data.one()
+            await session.commit()
+
+            token = generate_token(user_data[0])
+
+            return token
+        except Exception as e:
+            raise HTTPException(detail=f'{e}', status_code=status.HTTP_400_BAD_REQUEST)
+    finally:
+        await session.close()
