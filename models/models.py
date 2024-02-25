@@ -248,16 +248,6 @@ user_payment = Table(
     Column('created_at', TIMESTAMP, default=datetime.utcnow())
 )
 
-notification = Table(
-    'notification',
-    metadata,
-Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('news', String),
-    Column('events', String),
-    Column('created_at', TIMESTAMP, default=datetime.utcnow())
-
-)
-
 news = Table(
     'news',
     metadata,
