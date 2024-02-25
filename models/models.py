@@ -106,7 +106,8 @@ trainer = Table(
     Column('cost',Float),
     Column('phone_number', String),
     Column('rate', Float),
-    Column('description', String)
+    Column('description', String),
+    Column('notifications', Integer, ForeignKey('user_news.id'))
 )
 
 booked_trainer = Table(
@@ -255,4 +256,40 @@ Column('id', Integer, primary_key=True, autoincrement=True),
     Column('events', String),
     Column('created_at', TIMESTAMP, default=datetime.utcnow())
 
+)
+
+news = Table(
+    'news',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('title', String),
+    Column('news', String),
+    Column('created_at', TIMESTAMP, default=datetime.utcnow())
+)
+
+events = Table(
+    'events',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('title', String),
+    Column('event', String),
+    Column('created_at', TIMESTAMP, default=datetime.utcnow())
+)
+
+All = Table(
+    'all',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('news_id', Integer, ForeignKey('news.id')),
+    Column('events_id', Integer,ForeignKey('events.id'))
+
+)
+
+user_news = Table(
+    'user_news',
+    metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('news_id', Integer, ForeignKey('news.id'))
 )
