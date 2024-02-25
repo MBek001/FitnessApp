@@ -83,7 +83,8 @@ users = Table(
     Column('height', Integer),
     Column('gender', Enum(GenderEnum)),
     Column('is_trainer', Boolean, default=False),
-    Column('is_admin', Boolean, default=False)
+    Column('is_admin', Boolean, default=False),
+    Column('notifications', Integer, ForeignKey('user_news.id'))
 )
 
 user_goal = Table(
@@ -107,7 +108,6 @@ trainer = Table(
     Column('phone_number', String),
     Column('rate', Float),
     Column('description', String),
-    Column('notifications', Integer, ForeignKey('user_news.id'))
 )
 
 booked_trainer = Table(
