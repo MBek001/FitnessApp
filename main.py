@@ -266,7 +266,6 @@ async def check_trainer_availability(trainer_id: int, date: str,
     return free_time
 
 
-from fastapi import HTTPException
 
 @router.get("/book_trainer", response_model=str)
 async def book_trainer(trainer_id: int, date: str, hour: int, minute: int,
@@ -566,6 +565,152 @@ async def download_file(
     video_data = video__data.one()
     return FileResponse(video_data.video_url)
 
+@router.post("/add-notification-news")
+async def add_notification(title: str,news_data: str,useer_id: int , token: dict = Depends(verify_token), session: AsyncSession = Depends(get_async_session)):
+    user_id = token.get('user_id')
+    result = await session.execute(
+        select(users).where(
+            (users.c.id == user_id) &
+            (users.c.is_admin == True)
+        )
+    )
+
+    if not result.scalar():
+        raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED)
+    query = insert(news).values(
+        user_id=useer_id,
+        title=title,
+        news=news_data
+    )
+    await session.execute(query)
+    await session.commit()
+    return {"message": "Notification sent successfully"}
+
+
+@router.post("/add-notification-events")
+async def add_notification(news_data: str, title: str, token: dict = Depends(verify_token), session: AsyncSession = Depends(get_async_session)):
+    user_id = token.get('user_id')
+    result = await session.execute(
+        select(users).where(
+            (users.c.id == user_id) &
+            (users.c.is_admin == True)
+        )
+    )
+    if not result.scalar():
+        raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED)
+    query = insert(events).values(
+        title=title,
+        event=news_data
+    )
+    await session.execute(query)
+    await session.commit()
+    return {"message": "Notification sent successfully"}
+
+
+@router.get("/notification-news")
+async def send_notification_news(
+        token: dict = Depends(verify_token),
+        session : AsyncSession = Depends(get_async_session)
+):
+    user_id = token.get('user_id')
+
+    three_days_ago = datetime.utcnow() - timedelta(days=3)
+    query = select(news).where(news.c.created_at >= three_days_ago,news.c.user_id==user_id)
+    result = await session.execute(query)
+
+    notif = result.all()
+    res =[]
+    for i in notif:
+        notific=i.news
+        vohti=""
+        vohti+=str(i.created_at.hour)
+        vohti+=':'
+        vohti+=str(i.created_at.minute)
+        message=i.title
+        dictjon={
+            "message": message,
+            "news": notific,
+            "time": vohti
+
+        }
+        res.append(dictjon)
+        print(i)
+    return res
+
+
+@router.get("/notification-events")
+async def send_notification_events(
+        session : AsyncSession=Depends(get_async_session)
+):
+    three_days_ago = datetime.utcnow() - timedelta(days=3)
+    query = select(events).where(events.c.created_at >= three_days_ago)
+    result = await session.execute(query)
+    notif = result.all()
+    res =[]
+    for i in notif:
+        notific = i.event
+        vohti = ""
+
+        vohti += str(i.created_at.hour)
+        vohti += ':'
+        vohti += str(i.created_at.minute)
+        message = i.title
+        dictjon = {
+            "title": message,
+            "events": notific,
+            "time": vohti,
+
+        }
+        res.append(dictjon)
+        print(i)
+    return res
+
+
+@router.get("/notification-all")
+async def send_notification_all(
+        token: dict=Depends(verify_token),
+        session : AsyncSession=Depends(get_async_session)
+):
+    user_id = token.get('user_id')
+
+    three_days_ago = datetime.utcnow() - timedelta(days=3)
+    query = select(news).where(news.c.created_at >= three_days_ago,news.c.user_id==user_id)
+    result = await session.execute(query)
+    notif=result.all()
+    query1=select(events)
+    result1= await session.execute(query1)
+    notif1=result1.all()
+    res=[]
+    for i in notif:
+        notific=i.news
+        vohti=""
+        vohti+=str(i.created_at.hour)
+        vohti+=':'
+        vohti+=str(i.created_at.minute)
+        message=i.title
+        dictjon={
+            "message": message,
+            "news": notific,
+            "time": vohti
+
+        }
+        res.append(dictjon)
+    for i in notif1:
+        notific = i.event
+        vohti = ""
+
+        vohti += str(i.created_at.hour)
+        vohti += ':'
+        vohti += str(i.created_at.minute)
+        message = i.title
+        dictjon = {
+            "title": message,
+            "events": notific,
+            "time": vohti,
+
+        }
+        res.append(dictjon)
+    return res
 
 app.include_router(register_router, prefix='/auth')
 app.include_router(router, prefix='/main')
