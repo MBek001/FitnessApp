@@ -206,13 +206,6 @@ saved_cards = Table(
 
 )
 
-languages = Table(
-    'languages',
-    metadata,
-    Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('user_id', Integer, ForeignKey('users.id')),
-    Column('language', Enum(LanguageEnum), default=LanguageEnum.english),
-)
 
 insights = Table(
     'insights',
