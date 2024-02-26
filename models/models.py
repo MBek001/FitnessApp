@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import enum
 
@@ -116,7 +116,7 @@ booked_trainer = Table(
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('trainer_id', Integer, ForeignKey('trainer.id')),
-    Column('date', TIMESTAMP),
+    Column('date', TIMESTAMP, default=datetime.utcnow()+timedelta(hours=5)),
 )
 
 level = Table(
@@ -152,7 +152,7 @@ exercises = Table(
     Column('name', String),
     Column('video_url', String),
     Column('video_hash', String),
-    Column('date_added', TIMESTAMP),
+    Column('date_added', TIMESTAMP, default=datetime.utcnow()+timedelta(hours=5)),
     Column('instruction', String)
 )
 
@@ -172,7 +172,7 @@ user_subscription = Table(
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('purchase_id', Integer, ForeignKey('subscription.id')),
     Column('duration', Enum(SubDurationEnum)),
-    Column('created_at', TIMESTAMP, default=datetime.utcnow())
+    Column('created_at', TIMESTAMP, default=datetime.utcnow()++timedelta(hours=5))
 )
 
 user_status = Table(
@@ -223,7 +223,7 @@ insights = Table(
     Column('time_spent', Float),
     Column('heartbeat', Integer),
     Column('day', Enum(WeekdaysEnum)),
-    Column('date', TIMESTAMP)
+    Column('date', TIMESTAMP, default=datetime.utcnow()+timedelta(hours=5))
 )
 
 workout_plan = Table(
@@ -245,7 +245,7 @@ user_payment = Table(
     Column('trainer_id', Integer, ForeignKey('trainer.id')),
     Column('amount', Float),
     Column('payment_method', String),
-    Column('created_at', TIMESTAMP, default=datetime.utcnow())
+    Column('created_at', TIMESTAMP, default=datetime.utcnow()+timedelta(hours=5))
 )
 
 news = Table(
@@ -255,7 +255,7 @@ news = Table(
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('title', String),
     Column('news', String),
-    Column('created_at', TIMESTAMP, default=datetime.utcnow())
+    Column('created_at', TIMESTAMP, default=datetime.utcnow()+timedelta(hours=5))
 )
 
 events = Table(
