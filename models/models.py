@@ -82,6 +82,7 @@ users = Table(
     Column('weight', Integer),
     Column('height', Integer),
     Column('gender', Enum(GenderEnum)),
+    Column('language',Enum(LanguageEnum), default=LanguageEnum.english),
     Column('is_trainer', Boolean, default=False),
     Column('is_admin', Boolean, default=False),
     Column('notifications', Integer, ForeignKey('user_news.id'))
@@ -210,7 +211,7 @@ languages = Table(
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('user_id', Integer, ForeignKey('users.id')),
-    Column('language', Enum(LanguageEnum))
+    Column('language', Enum(LanguageEnum), default=LanguageEnum.english),
 )
 
 insights = Table(
