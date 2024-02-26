@@ -101,7 +101,7 @@ trainer = Table(
     'trainer',
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('full_name', String),
+    Column('user_id', Integer, ForeignKey('users.id')),
     Column('experience', Integer),
     Column('completed', Integer),
     Column('active_clients', Integer),
