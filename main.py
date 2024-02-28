@@ -6,15 +6,11 @@ from datetime import datetime, date, timedelta
 from typing import List, Union
 
 import aiofiles
-
-from models.models import trainer
 from fastapi import Body, UploadFile
 
-from sqlalchemy import select, insert,delete
 from sqlalchemy.exc import IntegrityError, NoResultFound, SQLAlchemyError
-from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import insert, select, update, func, join
+from sqlalchemy import insert, select, update, func, join, delete
 from starlette.responses import JSONResponse, FileResponse, RedirectResponse
 
 from auth.utils import verify_token
@@ -24,14 +20,11 @@ from models.models import *
 
 from fastapi import FastAPI, APIRouter, HTTPException, Depends
 from auth.auth import register_router
-from models.models import review,users
-from scheme import ReviewData
 from database import get_async_session
 from starlette import status
 
 r = redis.Redis(host='localhost', port=6379, db=0)
 app = FastAPI(title='Fitnessapp', version='1.0.0')
-from auth.utils import verify_token
 router = APIRouter()
 
 
@@ -97,9 +90,6 @@ async def homepage(token: dict = Depends(verify_token),
             "New Workouts": new_workouts_formatted,
             "Categories": category
              }
-
-def __init__(self, session):
-    self.session = session
 
 
 @router.post("/reviews/")
@@ -264,7 +254,6 @@ async def check_trainer_availability(trainer_id: int, date: str,
     ]
 
     return free_time
-
 
 
 @router.get("/book_trainer", response_model=str)
@@ -564,6 +553,7 @@ async def download_file(
     video__data = await session.execute(query)
     video_data = video__data.one()
     return FileResponse(video_data.video_url)
+
 
 @router.post("/add-notification-news")
 async def add_notification(title: str,news_data: str,useer_id: int , token: dict = Depends(verify_token), session: AsyncSession = Depends(get_async_session)):
