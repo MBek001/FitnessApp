@@ -37,6 +37,7 @@ register_router = APIRouter()
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
 
+
 @register_router.post('/register')
 async def register(
         user_data: UserRegister,
@@ -78,12 +79,11 @@ async def login(user: UserLogin, session: AsyncSession = Depends(get_async_sessi
             return {'success': False, 'message': 'Email or password is not correct!'}
 
 
-
 @register_router.patch('/edit-profile')
 async def edit_profile(
-        photo: UploadFile,
-        name: str,
-        email: str,
+        photo: UploadFile = None,
+        email: str = None,
+        name: str = None,
         session: AsyncSession = Depends(get_async_session),
         token: dict = Depends(verify_token)
 ):
@@ -94,22 +94,30 @@ async def edit_profile(
         query = select(users).where(users.c.id == user_id)
         userdata = await session.execute(query)
         user_data = userdata.one_or_none()
-        out_file = f'/{photo.filename}'
-        async with aiofiles.open(f'user_photos/{out_file}', 'wb') as f:
-            content = await photo.read()
-            await f.write(content)
 
-        query = update(users).where(users.c.id == user_data.id).values(
-            email=email,
-            name=name,
-            photo_url=out_file
-        )
+        if photo is not None:
+            out_file = f'/{photo.filename}'
+            async with aiofiles.open(f'user_photos/{out_file}', 'wb') as f:
+                content = await photo.read()
+                await f.write(content)
+
+        if email is not None:
+            query = update(users).where(users.c.id == user_data.id).values(
+                email=email,
+            )
+        elif name is not None:
+            query = update(users).where(users.c.id == user_data.id).values(
+                name=name,
+            )
+        else:
+            query = update(users).where(users.c.id == user_data.id).values(
+                photo_url=out_file if photo is not None else None
+            )
         await session.execute(query)
         await session.commit()
     except Exception as e:
         raise HTTPException(status_code=400, detail=e)
     return {'success': True, 'message': 'Profile updated successfully!'}
-
 
 
 @register_router.get('/forget-password/{email}')
