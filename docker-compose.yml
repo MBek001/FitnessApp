@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  fastapi:
+    build: .
+    container_name: fast
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 8000
+    volumes:
+      - .:/app
+      - media_volume:/media
+    env_file:
+      - ./.env
+    environment:
+      - DATABASE_URL=postgresql://DB_USER:DB_PASSWORD@DB_HOST:DB_PORT/DB_NAME
+    ports:
+      - '8000:8000'
+    depends_on:
+      - db
+      - celery
+      - redis
+  db:
+    container_name: database
+    image: postgres:15.0-alpine
+    command: -p 5432
+    expose:
+      - 5432
+    env_file:
+      - ./.env
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+
+  celery:
+    build: .
+    container_name: celery
+    command: /usr/local/bin/celery --app=tasks:celery worker --loglevel=INFO
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:6-alpine
+    container_name: redis
+    command: --port 6379
+    volumes:
+      - redis_data:/data/
+    expose:
+      - 6379
+
+volumes:
+  media_volume:
+  redis_data:
