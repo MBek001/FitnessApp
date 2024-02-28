@@ -1,6 +1,8 @@
 import os
 import random
 import json
+from datetime import datetime
+
 import requests
 import aiofiles
 import redis
@@ -8,6 +10,10 @@ import jwt
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import NoResultFound
+
+from fastapi import Depends, APIRouter, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
 from passlib.context import CryptContext
 
 from .utils import generate_token, verify_token
@@ -24,7 +30,6 @@ from config import GOOGLE_CLIENT_ID, GOOGLE_REDIRECT_URL, GOOGLE_CLIENT_SECRET_K
 from tasks import send_mail_for_forget_password
 
 from dotenv import load_dotenv
-
 
 load_dotenv()
 redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
@@ -54,7 +59,7 @@ async def register(
         query = insert(users).values(**dict(user_in_db))
         await session.execute(query)
         await session.commit()
-        return {'success': True, 'message':'Account created successfully'}
+        return {'success': True, 'message': 'Account created successfully'}
     else:
         raise HTTPException(status_code=400, detail='Passwords are not the same !')
 
@@ -143,7 +148,6 @@ async def reset_password(
         confirm_password: str,
         session: AsyncSession = Depends(get_async_session)
 ):
-
     try:
         if new_password != confirm_password:
             raise HTTPException(detail="Passwords do not match!", status_code=status.HTTP_400_BAD_REQUEST)
@@ -152,7 +156,8 @@ async def reset_password(
         js_data = json.loads(data)
 
         if js_data['code'] == code:
-            query = update(users).where(users.c.email == email).values({users.c.password: pwd_context.hash(new_password)})
+            query = update(users).where(users.c.email == email).values(
+                {users.c.password: pwd_context.hash(new_password)})
             await session.execute(query)
             await session.commit()
 
@@ -185,7 +190,8 @@ async def auth_google(code: str, session: AsyncSession = Depends(get_async_sessi
     }
     response = requests.post(token_url, data=data)
     access_token = response.json().get("access_token")
-    user_info = requests.get("https://www.googleapis.com/oauth2/v1/userinfo", headers={"Authorization": f"Bearer {access_token}"})
+    user_info = requests.get("https://www.googleapis.com/oauth2/v1/userinfo",
+                             headers={"Authorization": f"Bearer {access_token}"})
 
     user_data = {
         'name': user_info.json().get('given_name'),
@@ -214,3 +220,25 @@ async def auth_google(code: str, session: AsyncSession = Depends(get_async_sessi
             raise HTTPException(detail=f'{e}', status_code=status.HTTP_400_BAD_REQUEST)
     finally:
         await session.close()
+
+
+async def is_admin(token: dict = Depends(verify_token), session: AsyncSession = Depends(get_async_session)):
+    admin_id = token['user_id']
+    query = select(users).where(users.c.id == admin_id)
+    query = await session.execute(query)
+    query = query.one()
+    await session.close()
+    if query[-1] == 'admin':
+        return {'is_admin': True}
+    else:
+        return {'is_admin': False}
+
+
+async def check_date(date_string):
+    try:
+        datetime_object = datetime.strptime(date_string, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+
+
