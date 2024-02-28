@@ -84,8 +84,7 @@ users = Table(
     Column('gender', Enum(GenderEnum)),
     Column('language',Enum(LanguageEnum), default=LanguageEnum.english),
     Column('is_trainer', Boolean, default=False),
-    Column('is_admin', Boolean, default=False),
-    Column('notifications', Integer, ForeignKey('user_news.id'))
+    Column('is_admin', Boolean, default=False)
 )
 
 user_goal = Table(
