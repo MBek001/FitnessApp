@@ -507,7 +507,7 @@ async def upload_file(
     result = await session.execute(
         select(users).where(
             (users.c.id == user_id)&
-            (users.c.user_role == 'admin')
+            (users.c.is_admin == True)
         )
     )
     if not result.scalar():
