@@ -712,5 +712,31 @@ async def send_notification_all(
         res.append(dictjon)
     return res
 
+
+@router.get('/get-languages')
+async def get_languages():
+    res = []
+    for i in LanguageEnum:
+        res.append(i)
+
+    return res
+
+
+@router.patch('/edit-user-language')
+async def edit_user(
+        new_language: str,
+        token: dict = Depends(verify_token),
+        session: AsyncSession = Depends(get_async_session)
+):
+    if token is None:
+        return HTTPException(status_code=403, detail='Forbidden')
+    user_id = token.get('user_id')
+
+    query = update(users).where(users.c.id == user_id).values(language=new_language)
+    await session.execute(query)
+    await session.commit()
+    return {'success': True, 'detail': f'Languages Successfully Updated {new_language}'}
+
+
 app.include_router(register_router, prefix='/auth')
 app.include_router(router, prefix='/main')
