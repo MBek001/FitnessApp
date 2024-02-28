@@ -727,5 +727,95 @@ async def edit_user(
     return {'success': True, 'detail': f'Languages Successfully Updated {new_language}'}
 
 
+@router.post("/add_trainers")
+async def add_trainer(
+        user_id:int,
+        expirence: int,
+        phone_number: str,
+        description: str,
+        cost: float,
+        token: dict = Depends(verify_token),
+        session: AsyncSession = Depends(get_async_session)):
+    if token is None:
+        raise HTTPException(status_code=403, detail='Forbidden')
+
+    user_idd = token.get('user_id')
+    result = await session.execute(
+        select(users).where(
+            (users.c.id == user_idd) &
+            (users.c.is_admin == True)
+        )
+    )
+    quer = await session.execute(
+        select(trainer).where(
+            (trainer.c.user_id == user_idd)
+        )
+    )
+    if result.scalar():
+        if  quer.scalar():
+            query = insert(trainer).values(
+                experience=expirence,
+                cost=cost,
+                phone_number=phone_number,
+                description=description,
+                user_id=user_id
+            )
+            await session.execute(query)
+            await session.execute(
+                users.update()
+                .where(users.c.id == user_id)
+                .values(
+                    is_trainer=True
+                )
+            )
+            await session.commit()
+            return {'success': True, 'detail': 'Trainer added successfully'}
+        else:
+            return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Trainer already exists')
+    else:
+        return HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+@router.delete("/trainers")
+async def delete_trainer(
+        user_id: int,
+        token: dict = Depends(verify_token),
+        session: AsyncSession = Depends(get_async_session)
+):
+    if token is None:
+        raise HTTPException(status_code=403, detail='Forbidden')
+
+    user_idd = token.get('user_id')
+    result = await session.execute(
+        select(users).where(
+            (users.c.id == user_idd) &
+            (users.c.is_admin == True)
+        )
+    )
+    quer = await session.execute(
+        select(trainer).where(
+            (trainer.c.user_id == user_id)
+        )
+    )
+    if result.scalar():
+        if quer.scalar():
+            await session.execute(
+                delete(trainer).where(trainer.c.user_id == user_id)
+            )
+            await session.execute(
+                users.update()
+                .where(users.c.id == user_id)
+                .values(
+                    is_trainer=False
+                )
+            )
+            await session.commit()
+            return {'success': True, 'detail': 'Trainer deleted successfully'}
+        else:
+            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Trainer not found')
+    else:
+        return HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
 app.include_router(register_router, prefix='/auth')
 app.include_router(router, prefix='/main')
