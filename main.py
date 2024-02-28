@@ -3,18 +3,17 @@ import os
 import secrets
 import redis
 from datetime import datetime, date, timedelta
-from typing import List, Union
+from typing import List
 
 import aiofiles
 from fastapi import Body, UploadFile
 
-from sqlalchemy.exc import IntegrityError, NoResultFound, SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import insert, select, update, func, join, delete
-from starlette.responses import JSONResponse, FileResponse, RedirectResponse
+from starlette.responses import FileResponse, RedirectResponse
 
 from auth.utils import verify_token
-from database import get_async_session
 from scheme import *
 from models.models import *
 
