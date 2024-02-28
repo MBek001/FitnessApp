@@ -2,10 +2,12 @@ import json
 import os
 import secrets
 import redis
-from datetime import datetime, date, timedelta
 from typing import List
 
 import aiofiles
+
+from category.category import category_router
+from insights.insights import insights_router
 from fastapi import Body, UploadFile
 
 from sqlalchemy.exc import IntegrityError, NoResultFound
@@ -14,13 +16,12 @@ from sqlalchemy import insert, select, update, func, join, delete
 from starlette.responses import FileResponse, RedirectResponse
 
 from auth.utils import verify_token
-from scheme import *
 from models.models import *
-
 from fastapi import FastAPI, APIRouter, HTTPException, Depends
 from auth.auth import register_router
 from database import get_async_session
 from starlette import status
+from trainer.trainer import trainer_router
 
 r = redis.Redis(host='localhost', port=6379, db=0)
 app = FastAPI(title='Fitnessapp', version='1.0.0')
@@ -776,7 +777,7 @@ async def add_trainer(
         return HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-@router.delete("/trainers")
+@router.delete("/delete_trainers")
 async def delete_trainer(
         user_id: int,
         token: dict = Depends(verify_token),
@@ -818,4 +819,8 @@ async def delete_trainer(
 
 
 app.include_router(register_router, prefix='/auth')
+app.include_router(register_router, prefix='/user')
+app.include_router(insights_router, prefix='/insights')
+app.include_router(trainer_router, prefix='/trainer')
+app.include_router(category_router, prefix='/category')
 app.include_router(router, prefix='/main')
