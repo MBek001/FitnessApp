@@ -1,29 +1,24 @@
 import os
-import secrets
 import random
 import json
 import requests
 import aiofiles
 import redis
 import jwt
-from sqlalchemy import update
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import NoResultFound
-from fastapi import Depends, APIRouter, HTTPException,status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
 
 from .utils import generate_token, verify_token
 from database import get_async_session
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select, insert, update
-from fastapi import APIRouter, UploadFile
+from fastapi import APIRouter, UploadFile, HTTPException, status
 
-from .schemes import UserRegister, UserInDB, UserInfo, UserLogin, UserUpdate
+from .schemes import UserRegister, UserInDB, UserLogin
 from models.models import users
 
-from datetime import datetime
 from pydantic import EmailStr
 from config import GOOGLE_CLIENT_ID, GOOGLE_REDIRECT_URL, GOOGLE_CLIENT_SECRET_KEY, REDIS_HOST, REDIS_PORT
 from tasks import send_mail_for_forget_password
