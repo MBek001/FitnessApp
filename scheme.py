@@ -102,3 +102,10 @@ class TrainerAvailable(BaseModel):
     minutes: int
 
 
+class TrainerDetailResponse(BaseModel):
+    user_id: int
+    name: str
+    experience: int
+    active_clients: int
+    phone_number: str
+    description: str

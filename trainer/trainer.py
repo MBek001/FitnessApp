@@ -12,7 +12,7 @@ from models.models import users, trainer
 trainer_router = APIRouter()
 
 
-@trainer_router.get('/', response_model=List[Trainers])
+@trainer_router.get('/fitness_instructions', response_model=List[Trainers])
 async def trainer_(token: dict = Depends(verify_token),
                    session: AsyncSession = Depends(get_async_session)):
     try:
@@ -28,8 +28,6 @@ async def trainer_(token: dict = Depends(verify_token),
             view = len(is_trainer)
             for i in range(0, view):
                 data = {
-                    "id": is_trainer[i][0],
-                    "user_id": is_trainer[i][1],
                     "name": query[i][1],
                     "experience": is_trainer[i][2],
                     "rate": is_trainer[i][-2],

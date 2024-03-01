@@ -14,6 +14,7 @@ click-didyoumean==0.3.0
 click-plugins==1.1.1
 click-repl==0.3.0
 dnspython==2.6.1
+docker==7.0.0
 email-validator==2.1.0.post1
 fastapi==0.109.2
 greenlet==3.0.3
@@ -28,6 +29,7 @@ kombu==5.3.5
 Mako==1.3.2
 MarkupSafe==2.1.5
 orjson==3.9.15
+packaging==23.2
 passlib==1.7.4
 prompt-toolkit==3.0.43
 psycopg2-binary==2.9.9

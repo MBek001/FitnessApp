@@ -15,7 +15,7 @@ from models.models import insights
 insights_router = APIRouter()
 
 
-@insights_router.post('/insights')
+@insights_router.post('/add_insights')
 async def add(blog: InsightsPost, token: dict = Depends(verify_token),
               session: AsyncSession = Depends(get_async_session)):
     try:

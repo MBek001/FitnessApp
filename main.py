@@ -9,7 +9,7 @@ import aiofiles
 from category.category import category_router
 from insights.insights import insights_router
 from fastapi import Body, UploadFile
-
+from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import insert, select, update, func, join, delete
@@ -21,6 +21,9 @@ from fastapi import FastAPI, APIRouter, HTTPException, Depends
 from auth.auth import register_router
 from database import get_async_session
 from starlette import status
+
+from models.models import trainer
+from scheme import TrainerDetailResponse
 from trainer.trainer import trainer_router
 
 r = redis.Redis(host='localhost', port=6379, db=0)
@@ -491,7 +494,11 @@ async def payment(
             amount=amount,
             card_id=card_id
         )
+        query = update(trainer).where(trainer.c.id == trainer_id).values(
+            active_clients=trainer.c.active_clients + 1
+        )
         await session.execute(new_payment)
+        await session.execute(query)
         await session.commit()
         return {'success': True, 'detail': 'Payment successfully'}
     else:
@@ -753,7 +760,7 @@ async def add_trainer(
         )
     )
     if result.scalar():
-        if  quer.scalar():
+        if not quer.scalar():
             query = insert(trainer).values(
                 experience=expirence,
                 cost=cost,
@@ -816,6 +823,37 @@ async def delete_trainer(
             return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Trainer not found')
     else:
         return HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+@router.get("/trainer-detail")
+async def get_trainer_detail(
+    trainer_id: int,
+    session: AsyncSession = Depends(get_async_session)
+):
+    result = select(trainer).join(users, trainer.c.user_id == users.c.id).filter(trainer.c.user_id == trainer_id).with_only_columns(
+        trainer.c.user_id,
+        users.c.name,
+        trainer.c.experience,
+        trainer.c.completed,
+        trainer.c.active_clients,
+        trainer.c.phone_number,
+        trainer.c.description
+    )
+    data = await session.execute(result)
+    trainer_data = data.fetchone()
+    print(trainer_data)
+    if trainer_data is None:
+        raise HTTPException(status_code=404, detail="Trainer not found")
+
+    return TrainerDetailResponse(
+        user_id=trainer_data.user_id,
+        name=trainer_data.name,
+        experience=trainer_data.experience,
+        active_clients=trainer_data.active_clients,
+        phone_number=trainer_data.phone_number,
+        description=trainer_data.description
+    )
+
 
 
 app.include_router(register_router, prefix='/auth')

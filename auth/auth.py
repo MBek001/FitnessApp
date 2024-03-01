@@ -20,7 +20,7 @@ from .utils import generate_token, verify_token
 from database import get_async_session
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select, insert, update
-from fastapi import APIRouter, UploadFile, HTTPException, status
+from fastapi import APIRouter, UploadFile, HTTPException, status, Depends
 
 from .schemes import UserRegister, UserInDB, UserLogin
 from models.models import users

@@ -27,7 +27,7 @@ async def login(blog: WorkoutCategory, session: AsyncSession = Depends(get_async
         return {"success": False, "message": f"{e}"}
 
 
-@category_router.get('/user_workout')
+@category_router.get('/user_workout_information')
 async def getting(token: dict = Depends(verify_token), session: AsyncSession = Depends(get_async_session)):
     try:
         user_id = token['user_id']
@@ -40,7 +40,7 @@ async def getting(token: dict = Depends(verify_token), session: AsyncSession = D
         return {"success": True, "message": f"{e}"}
 
 
-@category_router.post('/')
+@category_router.post('/add_category')
 async def category_(blog: Category, token: dict = Depends(verify_token),
                     session: AsyncSession = Depends(get_async_session)):
     try:
@@ -53,7 +53,7 @@ async def category_(blog: Category, token: dict = Depends(verify_token),
         return {"success": False, "message": f"{e}"}
 
 
-@category_router.get('/', response_model=List[GetCategory])
+@category_router.get('/categories', response_model=List[GetCategory])
 async def category_(token: dict = Depends(verify_token), session: AsyncSession = Depends(get_async_session)):
     try:
         if token and await is_admin(token, session):
@@ -65,7 +65,7 @@ async def category_(token: dict = Depends(verify_token), session: AsyncSession =
         return {"success": False, "message": f"{e}"}
 
 
-@category_router.post('/exercises')
+@category_router.post('/add_exercises')
 async def exercises_(blog: Exercises, token: dict = Depends(verify_token),
                      session: AsyncSession = Depends(get_async_session)):
     try:
@@ -91,7 +91,7 @@ async def get_exercises(token: dict = Depends(verify_token),
         return {"success": False, "message": f"{e}"}
 
 
-@category_router.post('/level')
+@category_router.post('/add_level')
 async def level_(blog: Level, token: dict = Depends(verify_token),
                  session: AsyncSession = Depends(get_async_session)):
     try:
@@ -104,7 +104,7 @@ async def level_(blog: Level, token: dict = Depends(verify_token),
         return {"success": False, "message": f"{e}"}
 
 
-@category_router.get('/level', response_model=GetLevel)
+@category_router.get('/levels', response_model=GetLevel)
 async def lev(token: dict = Depends(verify_token),
               session: AsyncSession = Depends(get_async_session)):
     try:
