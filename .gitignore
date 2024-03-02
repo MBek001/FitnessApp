@@ -4,6 +4,5 @@ __pycache__/
 **/venv/
 neseccery
 src/.env
-migrations/versions
 user_photos
 files
