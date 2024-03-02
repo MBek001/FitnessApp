@@ -260,15 +260,6 @@ events = Table(
     Column('created_at', TIMESTAMP, default=datetime.utcnow())
 )
 
-All = Table(
-    'all',
-    metadata,
-    Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('news_id', Integer, ForeignKey('news.id')),
-    Column('events_id', Integer,ForeignKey('events.id'))
-
-)
-
 user_news = Table(
     'user_news',
     metadata,
