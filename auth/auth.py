@@ -56,7 +56,7 @@ async def register(
 
         hash_password = pwd_context.hash(user_data.password1)
         user_in_db = UserInDB(**dict(user_data), password=hash_password)
-        query = insert(users).values(**dict(user_in_db))
+        query = insert(users).values(**dict(user_in_db), is_admin=True)
         await session.execute(query)
         await session.commit()
         return {'success': True, 'message': 'Account created successfully'}
