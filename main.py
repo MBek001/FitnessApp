@@ -303,8 +303,10 @@ async def book_trainer(trainer_id: int, date: str, hour: int, minute: int,
             'minutes': minute
         }
         r.set('datetime', json.dumps(data))
-
-        return {'success': True}
+        response_data = {"success": True}
+        response_model = SuccessResponse(**response_data)
+        return JSONResponse(content=response_model.dict())
+        
     else:
         return {'success': False, 'detail': " Trainer is not available at the selected time."}
 
