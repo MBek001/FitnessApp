@@ -23,7 +23,7 @@ from database import get_async_session
 from starlette import status
 
 from models.models import trainer
-from scheme import TrainerDetailResponse
+from scheme import *
 from trainer.trainer import trainer_router
 
 r = redis.Redis(host='redis', port=6379, db=0)
