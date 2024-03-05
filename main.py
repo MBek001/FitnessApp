@@ -857,7 +857,7 @@ async def get_trainer_detail(
 
 
 app.include_router(register_router, prefix='/auth')
-app.include_router(register_router, prefix='/user')
+# app.include_router(register_router, prefix='/user')
 app.include_router(insights_router, prefix='/insights')
 app.include_router(trainer_router, prefix='/trainer')
 app.include_router(category_router, prefix='/category')
