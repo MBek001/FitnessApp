@@ -109,3 +109,8 @@ class TrainerDetailResponse(BaseModel):
     active_clients: int
     phone_number: str
     description: str
+
+
+class SuccessResponse(BaseModel):
+    success: bool
+
