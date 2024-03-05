@@ -26,7 +26,7 @@ from models.models import trainer
 from scheme import TrainerDetailResponse
 from trainer.trainer import trainer_router
 
-r = redis.Redis(host='localhost', port=6379, db=0)
+r = redis.Redis(host='redis', port=6379, db=0)
 app = FastAPI(title='Fitnessapp', version='1.0.0')
 router = APIRouter()
 
