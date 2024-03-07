@@ -9,7 +9,7 @@ from database import get_async_session
 from sqlalchemy import select, insert
 from fastapi import APIRouter
 
-from .schemes import InsightsPost, GetInsightsPost
+from .schemes import InsightsPost, GetInsights
 from models.models import insights
 
 insights_router = APIRouter()
@@ -32,16 +32,27 @@ async def add(blog: InsightsPost, token: dict = Depends(verify_token),
         return {"success": False, "message": f"{e}"}
 
 
-@insights_router.get('/insights')
+@insights_router.get('/insights', response_model=dict)
 async def getting(blog_data: str, token: dict = Depends(verify_token),
                   session: AsyncSession = Depends(get_async_session)):
-    date = await check_date(blog_data)
-    if token and await is_admin(token, session) and date:
-        datetime_object = datetime.strptime(blog_data, "%Y-%m-%d")
-        query = select(insights).where(insights.c.date == datetime_object)
-        blog_date = await session.execute(query)
-        await session.execute(query)
-        query = blog_date.fetchone()
-        return query
-    else:
-        return {"success": False, "message": "No insights in the date!"}
+    try:
+        if token and await is_admin(token, session):
+            datetime_object = datetime.strptime(blog_data, "%Y-%m-%d")
+            query = select(insights).where(insights.c.date == datetime_object)
+            blog_date = await session.execute(query)
+            await session.execute(query)
+            query = blog_date.fetchone()
+            day = (query[-2]).value[0]
+            date = query[-1].strftime("%Y-%m-%d")
+            data = {
+                "id": query[0],
+                "calories": query[2],
+                "steps": query[3],
+                "time_spent": query[4],
+                "heartbeat": query[5],
+                "day": day,
+                "date": date,
+            }
+            return {"success": True, "data": data}
+    except Exception as e:
+        return {"success": False, "message": "No insights the day!"}

@@ -222,23 +222,21 @@ async def auth_google(code: str, session: AsyncSession = Depends(get_async_sessi
         await session.close()
 
 
-async def is_admin(token: dict = Depends(verify_token), session: AsyncSession = Depends(get_async_session)):
-    admin_id = token['user_id']
-    query = select(users).where(users.c.id == admin_id)
+async def is_admin(token, session):
+    user_id = token['user_id']
+    query = select(users).where(users.c.id == user_id)
     query = await session.execute(query)
-    query = query.one()
+    query = query.fetchone()
     await session.close()
-    if query[-1] == 'admin':
-        return {'is_admin': True}
+    if query[-1]:
+        return True
     else:
-        return {'is_admin': False}
+        return False
 
 
 async def check_date(date_string):
     try:
         datetime_object = datetime.strptime(date_string, "%Y-%m-%d")
-        return True
+        return datetime_object
     except ValueError:
         return False
-
-

@@ -22,7 +22,7 @@ class InsightsPost(BaseModel):
     date: datetime.date
 
 
-class GetInsightsPost(BaseModel):
+class GetInsights(BaseModel):
     id: int
     calories: float
     steps: int

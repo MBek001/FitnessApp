@@ -27,13 +27,22 @@ async def trainer_(token: dict = Depends(verify_token),
             is_trainer = is_trainer.fetchall()
             view = len(is_trainer)
             for i in range(0, view):
-                data = {
-                    "name": query[i][1],
-                    "experience": is_trainer[i][2],
-                    "rate": is_trainer[i][-2],
-                    "description": is_trainer[i][-1]
-                }
-                all_trainer.append(data)
+                if is_trainer[i][-2]:
+                    data = {
+                        "name": query[i][1],
+                        "experience": is_trainer[i][2],
+                        "rate": is_trainer[i][-2],
+                        "description": is_trainer[i][-1]
+                    }
+                    all_trainer.append(data)
+                else:
+                    data = {
+                        "name": query[i][1],
+                        "experience": is_trainer[i][2],
+                        "rate": 0,
+                        "description": is_trainer[i][-1]
+                    }
+                    all_trainer.append(data)
             return all_trainer
     except Exception as e:
         return {"success": False, "message": f"{e}"}

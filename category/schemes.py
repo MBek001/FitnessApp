@@ -1,3 +1,4 @@
+import datetime
 from enum import Enum
 from pydantic import BaseModel
 
@@ -14,7 +15,6 @@ class WorkoutCategory(BaseModel):
 
 class Category(BaseModel):
     name: str
-    photo_url: str
     level_id: int
 
 
@@ -23,13 +23,12 @@ class GetCategory(BaseModel):
     name: str
     level_id: int
     photo_url: str
+    photo_hashcode: str
 
 
 class Exercises(BaseModel):
     name: str
     category_id: int
-    video_url: str
-    video_hash: str
     instruction: str
 
 
@@ -38,7 +37,7 @@ class GetExercises(BaseModel):
     name: str
     category_id: int
     video_url: str
-    video_hash: str
+    video_hashcode: str
     instruction: str
 
 class Level(BaseModel):
@@ -48,4 +47,3 @@ class Level(BaseModel):
 class GetLevel(BaseModel):
     id: int
     name: str
-
