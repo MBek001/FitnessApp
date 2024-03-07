@@ -222,12 +222,20 @@ async def get_comment(trainer_id: int,
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
+
+
+
 @router.get("/check-trainer-availability", response_model=List[str])
 async def check_trainer_availability(trainer_id: int, date: str,
                                      session: AsyncSession = Depends(get_async_session),
                                      token: dict = Depends(verify_token)):
     if token is None:
         raise HTTPException(status_code=403, detail='Forbidden')
+
+    is_trainer = select(trainer.c.id).where(trainer.c.id == trainer_id)
+    iss_trainer = await session.execute(is_trainer)
+    if not iss_trainer.scalar():
+        raise HTTPException(status_code=404, detail='Trainer not found')
 
     selected_date = datetime.strptime(date, "%Y-%m-%d")
     print('select date', selected_date)
@@ -259,12 +267,20 @@ async def check_trainer_availability(trainer_id: int, date: str,
     return free_time
 
 
+
+
 @router.get("/book_trainer", response_model=str)
 async def book_trainer(trainer_id: int, date: str, hour: int, minute: int,
                        session: AsyncSession = Depends(get_async_session),
                        token: dict = Depends(verify_token)):
+
     if token is None:
         raise HTTPException(status_code=403, detail='Forbidden')
+
+    is_trainer = select(trainer.c.id).where(trainer.c.id == trainer_id)
+    iss_trainer = await session.execute(is_trainer)
+    if not iss_trainer.scalar():
+        raise HTTPException(status_code=404, detail='Trainer not found')
 
     selected_date_time = datetime.strptime(f"{date} {hour}:{minute}:00", "%Y-%m-%d %H:%M:00")
 
@@ -303,12 +319,11 @@ async def book_trainer(trainer_id: int, date: str, hour: int, minute: int,
             'minutes': minute
         }
         r.set('datetime', json.dumps(data))
-        response_data = {"success": True}
-        response_model = SuccessResponse(**response_data)
-        return JSONResponse(content=response_model.dict())
+
+        return "Doda Pizza"
         
     else:
-        return {'success': False, 'detail': " Trainer is not available at the selected time."}
+        return " Trainer is not available at the selected time."
 
 
 @router.post('/add-card')
@@ -376,7 +391,6 @@ async def update_card(
 
 @router.get('/get-cards')
 async def get_cards(
-        number: int,
         token: dict = Depends(verify_token),
         session: AsyncSession = Depends(get_async_session)
 ):
@@ -435,16 +449,30 @@ async def get_payment(
 
     user_id = token.get('user_id')
 
+    # Fetch user cards
     user_cards = await session.execute(select(saved_cards).where(saved_cards.c.user_id == user_id))
     user_cards_data = user_cards.all()
-    print(user_cards_data)
-    trainer_info = await session.execute(select(trainer.c.full_name, trainer.c.cost, trainer.c.description).where(trainer.c.id == trainer_id))
+
+    # Fetch trainer info
+    trainer_info = await session.execute(select(trainer.c.cost, trainer.c.description)
+                                         .where(trainer.c.id == trainer_id))
     trainer_data = trainer_info.all()
 
     if not user_cards_data:
-        raise HTTPException(status_code=404, detail='user Data not found')
+        raise HTTPException(status_code=404, detail='User data not found')
     if not trainer_data:
-        raise HTTPException(status_code=404, detail='trainer Data not found')
+        raise HTTPException(status_code=404, detail='Trainer data not found')
+
+    # Fetch trainer full name from users table
+    users_trainer_info = await session.execute(
+        select(users).select_from(join(trainer, users, trainer.c.user_id == users.c.id)).where(trainer.c.id == trainer_id)
+    )
+    users_trainer_data = users_trainer_info.all()
+
+    if not users_trainer_data:
+        raise HTTPException(status_code=404, detail='Trainer full name not found')
+
+    user_names = [user.name for user in users_trainer_data]
 
     data_json = r.get('datetime')
     if data_json is None:
@@ -453,10 +481,10 @@ async def get_payment(
 
     payment_info = {
         "user_cards": [{"card_id": card.id, "card_number": card.card_number} for card in user_cards_data],
-        "trainer_info": [{"full_name": trainerinfo.full_name, 'description': trainerinfo.description, "cost": trainerinfo.cost} for trainerinfo in trainer_data],
+        "trainer_info": {"full_name": user_names[0], 'description': trainer_data[0].description, "cost": trainer_data[0].cost},
         "booked_data": data
     }
-    print(payment_info)
+
     return payment_info
 
 
@@ -496,9 +524,20 @@ async def payment(
             amount=amount,
             card_id=card_id
         )
+        data_json = r.get('datetime')
+        if data_json is None:
+            return {"message": "No data found in Redis"}
+        data = json.loads(data_json.decode("utf-8"))
+        print(data)
+        query1 = insert(booked_trainer).values(
+            user_id=user_id,
+            trainer_id=trainer_id,
+            date=data.get('date')
+        )
         query = update(trainer).where(trainer.c.id == trainer_id).values(
             active_clients=trainer.c.active_clients + 1
         )
+        await session.execute(query1)
         await session.execute(new_payment)
         await session.execute(query)
         await session.commit()
