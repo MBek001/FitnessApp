@@ -159,9 +159,14 @@ async def delete_comment(comment_id: int, token: dict = Depends(verify_token),
 async def get_comment(trainer_id: int,
                       session: AsyncSession = Depends(get_async_session)):
     try:
+
+        query = select(review.c.rating, review.c.comment, review.c.trainer_id, trainer.c.id, trainer.c.user_id,  users.c.name , users.c.id) \
+            .where(review.c.trainer_id == trainer_id, trainer.c.id == trainer_id, trainer.c.user_id == users.c.id)
+
         query = select(review.c.rating, review.c.comment, review.c.trainer_id, trainer.c.id, trainer.c.full_name,
                        users.c.name) \
             .where(review.c.trainer_id == trainer_id, trainer.c.id == trainer_id)
+
         result = await session.execute(query)
         comments = result.all()
 
@@ -210,7 +215,6 @@ async def get_comment(trainer_id: int,
 
         for item in comments:
             comment_dict = {
-                'trainer': item.full_name,
                 'user': item.name,
                 'rating': item.rating,
                 'comment': item.comment
