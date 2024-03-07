@@ -88,11 +88,11 @@ async def homepage(token: dict = Depends(verify_token),
         category.append(cate_dict)
 
     return {
-            "User": user_dict,
-            "Workout Plan": plan_dict,
-            "New Workouts": new_workouts_formatted,
-            "Categories": category
-             }
+        "User": user_dict,
+        "Workout Plan": plan_dict,
+        "New Workouts": new_workouts_formatted,
+        "Categories": category
+    }
 
 
 @router.post("/reviews/")
@@ -133,7 +133,8 @@ async def review_exercise(
 
 
 @router.delete('/delete-review/')
-async def delete_comment(comment_id: int, token: dict = Depends(verify_token), session: AsyncSession = Depends(get_async_session)):
+async def delete_comment(comment_id: int, token: dict = Depends(verify_token),
+                         session: AsyncSession = Depends(get_async_session)):
     if token is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Token not provided!')
     user_id = token.get('user_id')
@@ -157,10 +158,15 @@ async def delete_comment(comment_id: int, token: dict = Depends(verify_token), s
 @router.get('/reviews-view/')
 async def get_comment(trainer_id: int,
                       session: AsyncSession = Depends(get_async_session)):
-
     try:
+
         query = select(review.c.rating, review.c.comment, review.c.trainer_id, trainer.c.id, trainer.c.user_id,  users.c.name , users.c.id) \
             .where(review.c.trainer_id == trainer_id, trainer.c.id == trainer_id, trainer.c.user_id == users.c.id)
+
+        query = select(review.c.rating, review.c.comment, review.c.trainer_id, trainer.c.id, trainer.c.full_name,
+                       users.c.name) \
+            .where(review.c.trainer_id == trainer_id, trainer.c.id == trainer_id)
+
         result = await session.execute(query)
         comments = result.all()
 
@@ -221,9 +227,6 @@ async def get_comment(trainer_id: int,
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-
-
-
 @router.get("/check-trainer-availability", response_model=List[str])
 async def check_trainer_availability(trainer_id: int, date: str,
                                      session: AsyncSession = Depends(get_async_session),
@@ -255,7 +258,7 @@ async def check_trainer_availability(trainer_id: int, date: str,
         (func.date(booked_trainer.c.date) == selected_date)
     )
     result = await session.execute(query)
-    booked_slots =result.scalars().all()
+    booked_slots = result.scalars().all()
 
     free_time = [
         taym.strftime("%H:%M")
@@ -266,13 +269,10 @@ async def check_trainer_availability(trainer_id: int, date: str,
     return free_time
 
 
-
-
 @router.get("/book_trainer", response_model=str)
 async def book_trainer(trainer_id: int, date: str, hour: int, minute: int,
                        session: AsyncSession = Depends(get_async_session),
                        token: dict = Depends(verify_token)):
-
     if token is None:
         raise HTTPException(status_code=403, detail='Forbidden')
 
@@ -320,7 +320,7 @@ async def book_trainer(trainer_id: int, date: str, hour: int, minute: int,
         r.set('datetime', json.dumps(data))
 
         return "Doda Pizza"
-        
+
     else:
         return " Trainer is not available at the selected time."
 
@@ -393,7 +393,6 @@ async def get_cards(
         token: dict = Depends(verify_token),
         session: AsyncSession = Depends(get_async_session)
 ):
-
     if token is None:
         return HTTPException(status_code=403, detail='Forbidden')
     user_id = token.get('user_id')
@@ -464,7 +463,8 @@ async def get_payment(
 
     # Fetch trainer full name from users table
     users_trainer_info = await session.execute(
-        select(users).select_from(join(trainer, users, trainer.c.user_id == users.c.id)).where(trainer.c.id == trainer_id)
+        select(users).select_from(join(trainer, users, trainer.c.user_id == users.c.id)).where(
+            trainer.c.id == trainer_id)
     )
     users_trainer_data = users_trainer_info.all()
 
@@ -480,7 +480,8 @@ async def get_payment(
 
     payment_info = {
         "user_cards": [{"card_id": card.id, "card_number": card.card_number} for card in user_cards_data],
-        "trainer_info": {"full_name": user_names[0], 'description': trainer_data[0].description, "cost": trainer_data[0].cost},
+        "trainer_info": {"full_name": user_names[0], 'description': trainer_data[0].description,
+                         "cost": trainer_data[0].cost},
         "booked_data": data
     }
 
@@ -554,7 +555,7 @@ async def upload_file(
     user_id = token.get('user_id')
     result = await session.execute(
         select(users).where(
-            (users.c.id == user_id)&
+            (users.c.id == user_id) &
             (users.c.is_admin == True)
         )
     )
@@ -577,7 +578,7 @@ async def upload_file(
     return {'success': True, 'message': 'Uploaded successfully'}
 
 
-@router.get('/get-file/{hashcode}')
+@router.get('/get-video/{hashcode}')
 async def download_file(
         hashcode: str
 ):
@@ -588,7 +589,7 @@ async def download_file(
     return {'file-link': file_url}
 
 
-@router.get('/download-file/{hashcode}', response_class=RedirectResponse)
+@router.get('/download-video/{hashcode}', response_class=RedirectResponse)
 async def download_file(
         hashcode: str,
         session: AsyncSession = Depends(get_async_session)
@@ -596,14 +597,15 @@ async def download_file(
     if hashcode is None:
         raise HTTPException(status_code=400, detail='Invalid hashcode')
 
-    query = select(exercises).where(exercises.c.video_hash == hashcode)
+    query = select(exercises).where(exercises.c.video_hashcode == hashcode)
     video__data = await session.execute(query)
     video_data = video__data.one()
     return FileResponse(video_data.video_url)
 
 
 @router.post("/add-notification-news")
-async def add_notification(title: str,news_data: str,useer_id: int , token: dict = Depends(verify_token), session: AsyncSession = Depends(get_async_session)):
+async def add_notification(title: str, news_data: str, useer_id: int, token: dict = Depends(verify_token),
+                           session: AsyncSession = Depends(get_async_session)):
     user_id = token.get('user_id')
     result = await session.execute(
         select(users).where(
@@ -625,7 +627,8 @@ async def add_notification(title: str,news_data: str,useer_id: int , token: dict
 
 
 @router.post("/add-notification-events")
-async def add_notification(news_data: str, title: str, token: dict = Depends(verify_token), session: AsyncSession = Depends(get_async_session)):
+async def add_notification(news_data: str, title: str, token: dict = Depends(verify_token),
+                           session: AsyncSession = Depends(get_async_session)):
     user_id = token.get('user_id')
     result = await session.execute(
         select(users).where(
@@ -647,24 +650,24 @@ async def add_notification(news_data: str, title: str, token: dict = Depends(ver
 @router.get("/notification-news")
 async def send_notification_news(
         token: dict = Depends(verify_token),
-        session : AsyncSession = Depends(get_async_session)
+        session: AsyncSession = Depends(get_async_session)
 ):
     user_id = token.get('user_id')
 
     three_days_ago = datetime.utcnow() - timedelta(days=3)
-    query = select(news).where(news.c.created_at >= three_days_ago,news.c.user_id==user_id)
+    query = select(news).where(news.c.created_at >= three_days_ago, news.c.user_id == user_id)
     result = await session.execute(query)
 
     notif = result.all()
-    res =[]
+    res = []
     for i in notif:
-        notific=i.news
-        vohti=""
-        vohti+=str(i.created_at.hour)
-        vohti+=':'
-        vohti+=str(i.created_at.minute)
-        message=i.title
-        dictjon={
+        notific = i.news
+        vohti = ""
+        vohti += str(i.created_at.hour)
+        vohti += ':'
+        vohti += str(i.created_at.minute)
+        message = i.title
+        dictjon = {
             "message": message,
             "news": notific,
             "time": vohti
@@ -677,13 +680,13 @@ async def send_notification_news(
 
 @router.get("/notification-events")
 async def send_notification_events(
-        session : AsyncSession=Depends(get_async_session)
+        session: AsyncSession = Depends(get_async_session)
 ):
     three_days_ago = datetime.utcnow() - timedelta(days=3)
     query = select(events).where(events.c.created_at >= three_days_ago)
     result = await session.execute(query)
     notif = result.all()
-    res =[]
+    res = []
     for i in notif:
         notific = i.event
         vohti = ""
@@ -705,27 +708,27 @@ async def send_notification_events(
 
 @router.get("/notification-all")
 async def send_notification_all(
-        token: dict=Depends(verify_token),
-        session : AsyncSession=Depends(get_async_session)
+        token: dict = Depends(verify_token),
+        session: AsyncSession = Depends(get_async_session)
 ):
     user_id = token.get('user_id')
 
     three_days_ago = datetime.utcnow() - timedelta(days=3)
-    query = select(news).where(news.c.created_at >= three_days_ago,news.c.user_id==user_id)
+    query = select(news).where(news.c.created_at >= three_days_ago, news.c.user_id == user_id)
     result = await session.execute(query)
-    notif=result.all()
-    query1=select(events)
-    result1= await session.execute(query1)
-    notif1=result1.all()
-    res=[]
+    notif = result.all()
+    query1 = select(events)
+    result1 = await session.execute(query1)
+    notif1 = result1.all()
+    res = []
     for i in notif:
-        notific=i.news
-        vohti=""
-        vohti+=str(i.created_at.hour)
-        vohti+=':'
-        vohti+=str(i.created_at.minute)
-        message=i.title
-        dictjon={
+        notific = i.news
+        vohti = ""
+        vohti += str(i.created_at.hour)
+        vohti += ':'
+        vohti += str(i.created_at.minute)
+        message = i.title
+        dictjon = {
             "message": message,
             "news": notific,
             "time": vohti
@@ -777,7 +780,7 @@ async def edit_user(
 
 @router.post("/add_trainers")
 async def add_trainer(
-        user_id:int,
+        user_id: int,
         expirence: int,
         phone_number: str,
         description: str,
@@ -867,10 +870,11 @@ async def delete_trainer(
 
 @router.get("/trainer-detail")
 async def get_trainer_detail(
-    trainer_id: int,
-    session: AsyncSession = Depends(get_async_session)
+        trainer_id: int,
+        session: AsyncSession = Depends(get_async_session)
 ):
-    result = select(trainer).join(users, trainer.c.user_id == users.c.id).filter(trainer.c.user_id == trainer_id).with_only_columns(
+    result = select(trainer).join(users, trainer.c.user_id == users.c.id).filter(
+        trainer.c.user_id == trainer_id).with_only_columns(
         trainer.c.user_id,
         users.c.name,
         trainer.c.experience,
@@ -894,6 +898,30 @@ async def get_trainer_detail(
         description=trainer_data.description
     )
 
+
+@router.get('/get-photo/{hashcode}')
+async def download_file(
+        hashcode: str
+):
+    if hashcode is None:
+        raise HTTPException(status_code=400, detail='Invalid hashcode')
+
+    file_url = f'http://127.0.0.1:8000/main/download-file/{hashcode}'
+    return {'file-link': file_url}
+
+
+@router.get('/download-photo/{hashcode}', response_class=RedirectResponse)
+async def download_file(
+        hashcode: str,
+        session: AsyncSession = Depends(get_async_session)
+):
+    if hashcode is None:
+        raise HTTPException(status_code=400, detail='Invalid hashcode')
+
+    query = select(category).where(category.c.photo_hashcode == hashcode)
+    video__data = await session.execute(query)
+    video_data = video__data.one()
+    return FileResponse(video_data.photo_url)
 
 
 app.include_router(register_router, prefix='/auth')
