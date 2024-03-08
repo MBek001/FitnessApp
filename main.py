@@ -447,11 +447,9 @@ async def get_payment(
 
     user_id = token.get('user_id')
 
-    # Fetch user cards
     user_cards = await session.execute(select(saved_cards).where(saved_cards.c.user_id == user_id))
     user_cards_data = user_cards.all()
 
-    # Fetch trainer info
     trainer_info = await session.execute(select(trainer.c.cost, trainer.c.description)
                                          .where(trainer.c.id == trainer_id))
     trainer_data = trainer_info.all()
@@ -461,7 +459,6 @@ async def get_payment(
     if not trainer_data:
         raise HTTPException(status_code=404, detail='Trainer data not found')
 
-    # Fetch trainer full name from users table
     users_trainer_info = await session.execute(
         select(users).select_from(join(trainer, users, trainer.c.user_id == users.c.id)).where(
             trainer.c.id == trainer_id)
@@ -925,7 +922,6 @@ async def download_file(
 
 
 app.include_router(register_router, prefix='/auth')
-# app.include_router(register_router, prefix='/user')
 app.include_router(insights_router, prefix='/insights')
 app.include_router(trainer_router, prefix='/trainer')
 app.include_router(category_router, prefix='/category')
