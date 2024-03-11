@@ -23,7 +23,6 @@ class GetCategory(BaseModel):
     name: str
     level_id: int
     photo_url: str
-    photo_hashcode: str
 
 
 class Exercises(BaseModel):
@@ -37,7 +36,6 @@ class GetExercises(BaseModel):
     name: str
     category_id: int
     video_url: str
-    video_hashcode: str
     instruction: str
 
 class Level(BaseModel):

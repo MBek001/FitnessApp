@@ -132,11 +132,10 @@ category = Table(
     Column('level_id', Integer, ForeignKey('levels.id')),
     Column('name', String),
     Column('photo_url', String),
-    Column('photo_hashcode', String)
 )
 
 
-workout_categories = Table(
+user_level = Table(
     'user_level',
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
@@ -152,7 +151,6 @@ exercises = Table(
     Column('category_id', Integer, ForeignKey('category.id')),
     Column('name', String),
     Column('video_url', String),
-    Column('video_hashcode', String),
     Column('date_added', TIMESTAMP, default=datetime.utcnow()+timedelta(hours=5)),
     Column('instruction', String)
 )
