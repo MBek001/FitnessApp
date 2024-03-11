@@ -9,7 +9,7 @@ from auth.utils import verify_token
 from database import get_async_session
 from sqlalchemy import select, insert
 from fastapi import APIRouter
-from models.models import workout_categories, exercises, category, level
+from models.models import user_level, exercises, category, level
 from .schemes import WorkoutCategory, Category, GetCategory, Exercises, GetExercises, Level, GetLevel
 
 category_router = APIRouter()
@@ -21,7 +21,7 @@ async def login(blog: WorkoutCategory, session: AsyncSession = Depends(get_async
     try:
         user_id = token['user_id']
         if token:
-            query = insert(workout_categories).values(user_id=int(user_id), level_id=int(dict(blog)['level_id']))
+            query = insert(user_level).values(user_id=int(user_id), level_id=int(dict(blog)['level_id']))
             await session.execute(query)
             await session.commit()
             return {"success": True, "message": "Workout Category added!"}
@@ -29,15 +29,20 @@ async def login(blog: WorkoutCategory, session: AsyncSession = Depends(get_async
         return {"success": False, "message": f"{e}"}
 
 
-@category_router.get('/user_workout_information')
+@category_router.get('/user_workout_information', response_model=dict)
 async def getting(token: dict = Depends(verify_token), session: AsyncSession = Depends(get_async_session)):
     try:
         user_id = token['user_id']
         if token:
-            query = select(workout_categories).where(workout_categories.c.user_id == user_id)
+            query = select(user_level).where(user_level.c.user_id == user_id)
             query = await session.execute(query)
             query = query.fetchone()
-            return query
+            data = {
+                "id": query[0],
+                "user_id": query[1],
+                "level_id": query[2]
+            }
+            return {"success": True, "data": data}
     except Exception as e:
         return {"success": True, "message": f"{e}"}
 
@@ -51,10 +56,8 @@ async def category_(photo: UploadFile, level_id: int, name: str, token: dict = D
             async with aiofiles.open(f'category_photos/{out_file}', 'wb') as f:
                 content = await photo.read()
                 await f.write(content)
-            photo_hashcode = secrets.token_hex(32)
             query = insert(category).values(photo_url=f'category_photos/{out_file}', level_id=level_id,
-                                            name=name,
-                                            photo_hashcode=photo_hashcode)
+                                            name=name)
             await session.execute(query)
             await session.commit()
         return {"success": True, "data": "Category added!"}
@@ -81,14 +84,13 @@ async def exercises_(video: UploadFile, instruction: str, name: str, category_id
     try:
         if token and await is_admin(token, session) and video:
             if video and token and await is_admin(token, session):
-                out_file = f'/{video.filename}'
+                out_file = f'{video.filename}'
                 async with aiofiles.open(f'exercises_videos/{out_file}', 'wb') as f:
                     content = await video.read()
                     await f.write(content)
-                video_hashcode = secrets.token_hex(32)
                 query = insert(exercises).values(category_id=category_id, name=name,
                                                  video_url=f'exercises_videos/{out_file}',
-                                                 video_hashcode=video_hashcode, instruction=instruction)
+                                                 instruction=instruction)
                 await session.execute(query)
                 await session.commit()
                 return {'success': True, 'message': 'Exercises added!'}
