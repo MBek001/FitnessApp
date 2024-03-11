@@ -9,10 +9,6 @@ class LevelEnum(str, Enum):
     advanced = 'advanced',
 
 
-class WorkoutCategory(BaseModel):
-    level_id: int
-
-
 class Category(BaseModel):
     name: str
     level_id: int

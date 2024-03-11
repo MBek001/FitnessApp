@@ -6,3 +6,12 @@ class Trainers(BaseModel):
     experience: int
     rate: float
     description: str
+
+
+class TrainerDetailResponse(BaseModel):
+    user_id: int
+    name: str
+    experience: int
+    active_clients: int
+    phone_number: str
+    description: str

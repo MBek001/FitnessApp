@@ -9,14 +9,19 @@ from auth.utils import verify_token
 from database import get_async_session
 from sqlalchemy import select, insert
 from fastapi import APIRouter
-from models.models import user_level, exercises, category, level
-from .schemes import WorkoutCategory, Category, GetCategory, Exercises, GetExercises, Level, GetLevel
+
+from models.models import user_level
+from scheme import UserWorkout
+
+from models.models import exercises, category, level
+from .schemes import Category, GetCategory, Exercises, GetExercises, Level, GetLevel
+
 
 category_router = APIRouter()
 
 
 @category_router.post('/user_workout')
-async def login(blog: WorkoutCategory, session: AsyncSession = Depends(get_async_session),
+async def login(blog: UserWorkout, session: AsyncSession = Depends(get_async_session),
                 token: dict = Depends(verify_token)):
     try:
         user_id = token['user_id']
@@ -47,6 +52,7 @@ async def getting(token: dict = Depends(verify_token), session: AsyncSession = D
         return {"success": True, "message": f"{e}"}
 
 
+
 @category_router.post('/add_category')
 async def category_(photo: UploadFile, level_id: int, name: str, token: dict = Depends(verify_token),
                     session: AsyncSession = Depends(get_async_session)):
@@ -65,7 +71,7 @@ async def category_(photo: UploadFile, level_id: int, name: str, token: dict = D
         return {"success": False, "message": f"{e}"}
 
 
-@category_router.get('/categories', response_model=List[GetCategory])
+@category_router.get('/category_info', response_model=List[GetCategory])
 async def category_(token: dict = Depends(verify_token), session: AsyncSession = Depends(get_async_session)):
     try:
         if token and await is_admin(token, session):
@@ -78,7 +84,7 @@ async def category_(token: dict = Depends(verify_token), session: AsyncSession =
 
 
 @category_router.post('/add_exercises')
-async def exercises_(video: UploadFile, instruction: str, name: str, category_id: int,
+async def exercises_(video: UploadFile, instruction: str, name: str,level_id:int, category_id: int,
                      token: dict = Depends(verify_token),
                      session: AsyncSession = Depends(get_async_session)):
     try:
@@ -88,7 +94,9 @@ async def exercises_(video: UploadFile, instruction: str, name: str, category_id
                 async with aiofiles.open(f'exercises_videos/{out_file}', 'wb') as f:
                     content = await video.read()
                     await f.write(content)
-                query = insert(exercises).values(category_id=category_id, name=name,
+                query = insert(exercises).values(level_id=level_id,
+                                                 category_id=category_id,
+                                                 name=name,
                                                  video_url=f'exercises_videos/{out_file}',
                                                  instruction=instruction)
                 await session.execute(query)
@@ -98,7 +106,7 @@ async def exercises_(video: UploadFile, instruction: str, name: str, category_id
         return {"success": False, "message": f"{e}"}
 
 
-@category_router.get('/exercises', response_model=List[GetExercises])
+@category_router.get('/exercises_info', response_model=List[GetExercises])
 async def get_exercises(token: dict = Depends(verify_token),
                         session: AsyncSession = Depends(get_async_session)):
     try:

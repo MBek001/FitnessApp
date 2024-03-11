@@ -84,7 +84,7 @@ users = Table(
     Column('gender', Enum(GenderEnum)),
     Column('language',Enum(LanguageEnum), default=LanguageEnum.english),
     Column('is_trainer', Boolean, default=False),
-    Column('is_admin', Boolean, default=True)
+    Column('is_admin', Boolean, default=False)
 )
 
 user_goal = Table(
@@ -125,6 +125,7 @@ level = Table(
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('name', Enum(LevelEnum))
 )
+
 category = Table(
     'category',
     metadata,
@@ -149,6 +150,7 @@ exercises = Table(
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('category_id', Integer, ForeignKey('category.id')),
+    Column('level_id', Integer, ForeignKey('levels.id')),
     Column('name', String),
     Column('video_url', String),
     Column('date_added', TIMESTAMP, default=datetime.utcnow()+timedelta(hours=5)),

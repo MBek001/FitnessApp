@@ -32,7 +32,7 @@ async def add(blog: InsightsPost, token: dict = Depends(verify_token),
         return {"success": False, "message": f"{e}"}
 
 
-@insights_router.get('/insights', response_model=dict)
+@insights_router.get('/insights_info', response_model=dict)
 async def getting(blog_data: str, token: dict = Depends(verify_token),
                   session: AsyncSession = Depends(get_async_session)):
     try:
