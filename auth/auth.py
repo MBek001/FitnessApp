@@ -222,18 +222,6 @@ async def auth_google(code: str, session: AsyncSession = Depends(get_async_sessi
         await session.close()
 
 
-async def is_admin(token, session):
-    user_id = token['user_id']
-    query = select(users).where(users.c.id == user_id)
-    query = await session.execute(query)
-    query = query.fetchone()
-    await session.close()
-    if query[-1]:
-        return True
-    else:
-        return False
-
-
 async def check_date(date_string):
     try:
         datetime_object = datetime.strptime(date_string, "%Y-%m-%d")

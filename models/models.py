@@ -102,11 +102,11 @@ trainer = Table(
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('experience', Integer),
-    Column('completed', Integer),
-    Column('active_clients', Integer),
+    Column('completed', Integer,default=0),
+    Column('active_clients', Integer, default=0),
     Column('cost',Float),
     Column('phone_number', String),
-    Column('rate', Float),
+    Column('rate', Float, default=0),
     Column('description', String),
 )
 

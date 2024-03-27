@@ -462,54 +462,59 @@ async def edit_user(
     return {'success': True, 'detail': f'Languages Successfully Updated {new_language}'}
 
 
-@router.get('/get-video/{video_id}')
+@router.get('/get-video/{exercises_id}')
 async def download_file(
-        video_id: int
+        exercises_id: int
 ):
-    if video_id is None:
+    if exercises_id is None:
         raise HTTPException(status_code=400, detail='Invalid hashcode')
 
-    file_url = f'http://127.0.0.1:8000/main/download-video/{video_id}'
+    file_url = f'http://127.0.0.1:8000/main/download-video/{exercises_id}'
     return {'file-link': file_url}
 
 
-@router.get('/download-video/{video_id}', response_class=RedirectResponse)
+@router.get('/download-video/{exercises_id}', response_class=RedirectResponse)
 async def download_file(
-        video_id: int,
+        exercises_id: int,
         session: AsyncSession = Depends(get_async_session)
 ):
-    if video_id is None:
-        raise HTTPException(status_code=400, detail='Invalid hashcode')
-    query = select(exercises).where(exercises.c.id == video_id)
-    video__data = await session.execute(query)
-    video_data = video__data.one()
-    return FileResponse(video_data.video_url)
+    try:
+        if exercises_id is None:
+            raise HTTPException(status_code=400, detail='Invalid hashcode')
+        query = select(exercises).where(exercises.c.id == exercises_id)
+        video__data = await session.execute(query)
+        video_data = video__data.one()
+        return FileResponse(video_data.video_url)
+    except Exception as e:
+        return {"success": False, "message": f"{e}"}
 
 
-@router.get('/get-photo/{photo_id}')
+@router.get('/get-photo/{category_id}')
 async def download_file(
-        photo_id: int
+        category_id: int
 ):
-    if photo_id is None:
+    if category_id is None:
         raise HTTPException(status_code=400, detail='Invalid hashcode')
 
-    file_url = f'http://127.0.0.1:8000/main/download-photo/{photo_id}'
+    file_url = f'http://127.0.0.1:8000/main/download-photo/{category_id}'
     return {'file-link': file_url}
 
 
-@router.get('/download-photo/{photo_id}', response_class=RedirectResponse)
+@router.get('/download-photo/{category_id}', response_class=RedirectResponse)
 async def download_file(
-        photo_id: int,
+        category_id: int,
         session: AsyncSession = Depends(get_async_session)
 ):
-    if photo_id is None:
-        raise HTTPException(status_code=400, detail='Invalid hashcode')
+    try:
+        if category_id is None:
+            raise HTTPException(status_code=400, detail='Invalid hashcode')
 
-    query = select(category).where(category.c.id == photo_id)
-    video__data = await session.execute(query)
-    video_data = video__data.one()
-    return FileResponse(video_data.photo_url)
-
+        query = select(category).where(category.c.id == category_id)
+        video__data = await session.execute(query)
+        video_data = video__data.one()
+        return FileResponse(video_data.photo_url)
+    except Exception as e:
+        return {"success": False, "message": f"{e}"}
 
 
 app.include_router(register_router, prefix='/auth')

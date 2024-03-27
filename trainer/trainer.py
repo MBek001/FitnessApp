@@ -39,7 +39,7 @@ async def add_trainer(
     )
     quer = await session.execute(
         select(trainer).where(
-            (trainer.c.user_id == user_idd)
+            (trainer.c.user_id == user_id)
         )
     )
     if result.scalar():
@@ -206,13 +206,14 @@ async def book_trainer(trainer_id: int, date: str, hour: int, minute: int,
         return " Trainer is not available at the selected time."
 
 
-@trainer_router.get("/trainer-detail")
+@trainer_router.get("/trainer-info")
 async def get_trainer_detail(
         trainer_id: int,
         session: AsyncSession = Depends(get_async_session)
 ):
     result = select(trainer).join(users, trainer.c.user_id == users.c.id).filter(
-        trainer.c.user_id == trainer_id).with_only_columns(
+        trainer.c.id == trainer_id).with_only_columns(
+        trainer.c.id,
         trainer.c.user_id,
         users.c.name,
         trainer.c.experience,
@@ -223,11 +224,11 @@ async def get_trainer_detail(
     )
     data = await session.execute(result)
     trainer_data = data.fetchone()
-    print(trainer_data)
     if trainer_data is None:
         raise HTTPException(status_code=404, detail="Trainer not found")
 
     return TrainerDetailResponse(
+        trainer_id=trainer_data.id,
         user_id=trainer_data.user_id,
         name=trainer_data.name,
         experience=trainer_data.experience,
@@ -237,7 +238,7 @@ async def get_trainer_detail(
     )
 
 
-@trainer_router.get('/fitness_instructions', response_model=List[Trainers])
+@trainer_router.get('/all_trainers_info', response_model=List[Trainers])
 async def trainer_(token: dict = Depends(verify_token),
                    session: AsyncSession = Depends(get_async_session)):
     try:
