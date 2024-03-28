@@ -9,6 +9,7 @@ class Trainers(BaseModel):
 
 
 class TrainerDetailResponse(BaseModel):
+    trainer_id: int
     user_id: int
     name: str
     experience: int
