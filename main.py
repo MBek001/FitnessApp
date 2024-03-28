@@ -469,7 +469,7 @@ async def download_file(
     if exercises_id is None:
         raise HTTPException(status_code=400, detail='Invalid hashcode')
 
-    file_url = f'http://127.0.0.1:8000/main/download-video/{exercises_id}'
+    file_url = f'http://159.65.49.146:8000//main/download-video/{exercises_id}'
     return {'file-link': file_url}
 
 
@@ -496,7 +496,7 @@ async def download_file(
     if category_id is None:
         raise HTTPException(status_code=400, detail='Invalid hashcode')
 
-    file_url = f'http://127.0.0.1:8000/main/download-photo/{category_id}'
+    file_url = f'http://159.65.49.146:8000//main/download-photo/{category_id}'
     return {'file-link': file_url}
 
 
