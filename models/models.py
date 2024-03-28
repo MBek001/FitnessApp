@@ -116,7 +116,7 @@ booked_trainer = Table(
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('trainer_id', Integer, ForeignKey('trainer.id')),
-    Column('date', TIMESTAMP, default=datetime.utcnow()+timedelta(hours=5)),
+    Column('date', TIMESTAMP)
 )
 
 level = Table(

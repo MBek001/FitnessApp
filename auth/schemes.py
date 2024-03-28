@@ -44,3 +44,14 @@ class UserLogin(BaseModel):
 class UserUpdate(BaseModel):
     name: str
     email: str
+
+
+class AllUserInfo(BaseModel):
+    id: int
+    name: str
+    email: str
+    age: int
+    weight: int
+    height: int
+    is_trainer: bool
+    is_admin: bool

@@ -1,6 +1,8 @@
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
+from fastapi import Depends, HTTPException
+from starlette import status
+
 from auth.utils import verify_token
 from database import get_async_session
 from sqlalchemy import select, insert, delete
@@ -16,22 +18,16 @@ insights_router = APIRouter()
 async def add(blog: InsightsPost, token: dict = Depends(verify_token),
               session: AsyncSession = Depends(get_async_session)):
     user_id = token.get('user_id')
-    result = await session.execute(
-        select(users).where(
-            (users.c.id == user_id) &
-            (users.c.is_admin == True)
-        )
-    )
+
     try:
         user_id = token['user_id']
-        if token and result.scalar() == 1:
-            query = insert(insights).values(user_id=int(user_id), calories=dict(blog)['calories'],
-                                            steps=dict(blog)['steps'], time_spent=dict(blog)['time_spent'],
-                                            heartbeat=dict(blog)['heartbeat'], date=dict(blog)['date'],
-                                            day=dict(blog)['day'])
-            await session.execute(query)
-            await session.commit()
-            return {'success': True, 'message': 'Insights added!', 'data': blog}
+        query = insert(insights).values(user_id=int(user_id), calories=dict(blog)['calories'],
+                                        steps=dict(blog)['steps'], time_spent=dict(blog)['time_spent'],
+                                        heartbeat=dict(blog)['heartbeat'], date=dict(blog)['date'],
+                                        day=dict(blog)['day'])
+        await session.execute(query)
+        await session.commit()
+        return {'success': True, 'message': 'Insights added!', 'data': blog}
     except Exception as e:
         return {"success": False, "message": f"{e}"}
 

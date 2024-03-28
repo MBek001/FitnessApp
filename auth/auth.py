@@ -2,7 +2,7 @@ import os
 import random
 import json
 from datetime import datetime
-
+from typing import List
 import requests
 import aiofiles
 import redis
@@ -22,7 +22,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select, insert, update
 from fastapi import APIRouter, UploadFile, HTTPException, status, Depends
 
-from .schemes import UserRegister, UserInDB, UserLogin
+from .schemes import UserRegister, UserInDB, UserLogin, AllUserInfo
 from models.models import users
 
 from pydantic import EmailStr
@@ -118,6 +118,24 @@ async def edit_profile(
     except Exception as e:
         raise HTTPException(status_code=400, detail=e)
     return {'success': True, 'message': 'Profile updated successfully!'}
+
+
+@register_router.get('/all_users_info', response_model=List[AllUserInfo])
+async def get_users(
+        session: AsyncSession = Depends(get_async_session),
+        token: dict = Depends(verify_token)
+):
+    user_id = token.get('user_id')
+    res = await session.execute(
+        select(users).where(
+            (users.c.id == user_id) &
+            (users.c.is_admin==True)
+        )
+    )
+    if not res.scalar():
+        raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED)
+    result = await session.execute(select(users))
+    return result.fetchall()
 
 
 @register_router.get('/forget-password/{email}')
@@ -228,3 +246,5 @@ async def check_date(date_string):
         return datetime_object
     except ValueError:
         return False
+
+

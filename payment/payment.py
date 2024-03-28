@@ -220,10 +220,14 @@ async def payment(
             return {"message": "No data found in Redis"}
         data = json.loads(data_json.decode("utf-8"))
         print(data)
+        date = data.get('date')
+        hours = data.get('hours')
+        minutes = data.get('minutes')
+        selected_date_time = datetime.strptime(f"{date} {hours}:{minutes}:00", "%Y-%m-%d %H:%M:00")
         query1 = insert(booked_trainer).values(
             user_id=user_id,
             trainer_id=trainer_id,
-            date=data.get('date')
+            date=selected_date_time
         )
         query = update(trainer).where(trainer.c.id == trainer_id).values(
             active_clients=trainer.c.active_clients + 1

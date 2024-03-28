@@ -200,7 +200,7 @@ async def book_trainer(trainer_id: int, date: str, hour: int, minute: int,
         }
         r.set('datetime', json.dumps(data))
 
-        return "Doda Pizza"
+        return "Booked successfully You can make payment now"
 
     else:
         return " Trainer is not available at the selected time."
@@ -213,8 +213,6 @@ async def get_trainer_detail(
 ):
     result = select(trainer).join(users, trainer.c.user_id == users.c.id).filter(
         trainer.c.id == trainer_id).with_only_columns(
-        trainer.c.id,
-        trainer.c.user_id,
         users.c.name,
         trainer.c.experience,
         trainer.c.completed,
@@ -228,8 +226,6 @@ async def get_trainer_detail(
         raise HTTPException(status_code=404, detail="Trainer not found")
 
     return TrainerDetailResponse(
-        trainer_id=trainer_data.id,
-        user_id=trainer_data.user_id,
         name=trainer_data.name,
         experience=trainer_data.experience,
         active_clients=trainer_data.active_clients,
@@ -238,9 +234,16 @@ async def get_trainer_detail(
     )
 
 
-@trainer_router.get('/all_trainers_info', response_model=List[Trainers])
+@trainer_router.get('/all_trainers_info')
 async def trainer_(token: dict = Depends(verify_token),
                    session: AsyncSession = Depends(get_async_session)):
+    user_id = token.get('user_id')
+    result = await session.execute(
+        select(users).where(
+            (users.c.id == user_id) &
+            (users.c.is_admin == True)
+        )
+    )
     try:
         if token:
             all_trainer = []
@@ -251,24 +254,48 @@ async def trainer_(token: dict = Depends(verify_token),
             is_trainer = select(trainer)
             is_trainer = await session.execute(is_trainer)
             is_trainer = is_trainer.fetchall()
-            view = len(is_trainer)
-            for i in range(0, view):
-                if is_trainer[i][-2]:
-                    data = {
-                        "name": query[i][1],
-                        "experience": is_trainer[i][2],
-                        "rate": is_trainer[i][-2],
-                        "description": is_trainer[i][-1]
-                    }
-                    all_trainer.append(data)
+            for i in range(len(is_trainer)):
+                if result.scalar():
+                    if is_trainer[i][-2]:
+                        data = {
+                            "id": is_trainer[i][0],
+                            "user_id": is_trainer[i][1],
+                            "name": query[i][1],
+                            "experience": is_trainer[i][2],
+                            "rate": is_trainer[i][-2],
+                            "description": is_trainer[i][-1]
+                        }
+                        all_trainer.append(data)
+                    else:
+                        data = {
+                            "id": is_trainer[i][0],
+                            "user_id": is_trainer[i][1],
+                            "name": query[i][1],
+                            "experience": is_trainer[i][2],
+                            "rate": 0,
+                            "description": is_trainer[i][-1]
+                        }
+                        all_trainer.append(data)
                 else:
-                    data = {
-                        "name": query[i][1],
-                        "experience": is_trainer[i][2],
-                        "rate": 0,
-                        "description": is_trainer[i][-1]
-                    }
-                    all_trainer.append(data)
+                    if is_trainer[i][-2]:
+                        data = {
+                            "trainer_id": is_trainer[i][0],
+                            "name": query[i][1],
+                            "experience": is_trainer[i][2],
+                            "rate": is_trainer[i][-2],
+                            "description": is_trainer[i][-1]
+                        }
+                        all_trainer.append(data)
+                    else:
+                        data = {
+                            "trainer_id": is_trainer[i][0],
+                            "name": query[i][1],
+                            "experience": is_trainer[i][2],
+                            "rate": 0,
+                            "description": is_trainer[i][-1]
+                        }
+                        all_trainer.append(data)
+
             return all_trainer
     except Exception as e:
         return {"success": False, "message": f"{e}"}

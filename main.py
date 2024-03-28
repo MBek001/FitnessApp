@@ -12,6 +12,8 @@ from fastapi import FastAPI, APIRouter, HTTPException, Depends
 from auth.auth import register_router
 from database import get_async_session
 from starlette import status
+
+from models.models import category
 from scheme import *
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -42,8 +44,15 @@ async def homepage(token: dict = Depends(verify_token),
     workout_plans = await session.execute(query)
     user_workout_plans = workout_plans.all()
 
-    workout_categori = await session.execute(select(user_level).filter(user_level.c.user_id == user_id))
-    user_workout_categoriess = workout_categori.all()
+    user_level_query = select(user_level.c.level_id).where(user_level.c.user_id == user_id)
+    user_level_result = await session.execute(user_level_query)
+    user_level_id = user_level_result.scalar()
+
+    category_query = select(category.c.name).where(category.c.level_id == user_level_id)
+    workout_categories_result = await session.execute(category_query)
+    workout_categories = workout_categories_result.all()
+
+    categories = [category.name for category in workout_categories]
 
     threedays = datetime.now() - timedelta(days=1)
     new_workouts = await session.execute(select(exercises).where(exercises.c.date_added >= threedays))
@@ -74,18 +83,12 @@ async def homepage(token: dict = Depends(verify_token),
         }
         new_workouts_formatted.append(new_workout_dict)
 
-    category = []
-    for cate in user_workout_categoriess:
-        cate_dict = {
-            "category": cate.category,
-        }
-        category.append(cate_dict)
 
     return {
         "User": user_dict,
         "Workout Plan": plan_dict,
         "New Workouts": new_workouts_formatted,
-        "Categories": category
+        "Categories": categories
     }
 
 
@@ -110,17 +113,13 @@ async def getting(token: dict = Depends(verify_token), session: AsyncSession = D
 
     try:
         user_id = token.get('user_id')
-        query = select(user_level).where(user_level.c.user_id == user_id)
-        result = await session.execute(query)
-        category = result.fetchone()
-
-        if category:
-            return category
-        else:
-            raise HTTPException(status_code=404, detail='Workout categories not found for this user')
-
+        query = await session.execute(select(user_level.c.level_id).where(user_level.c.user_id == user_id))
+        level_id = query.scalars().fetchall()[0]
+        query1 = await session.execute(select(level.c.name).where(level.c.id == level_id))
+        res = query1.scalars().fetchall()
+        return res
     except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail='Database error occurred')
+        raise HTTPException(status_code=500, detail=f'{e}')
 
 
 @router.post("/comment_review/")
@@ -191,7 +190,7 @@ async def get_comment(trainer_id: int,
         query = select(review.c.rating, review.c.comment, review.c.trainer_id, trainer.c.id, trainer.c.user_id,  users.c.name , users.c.id) \
             .where(review.c.trainer_id == trainer_id, trainer.c.id == trainer_id, trainer.c.user_id == users.c.id)
 
-        query = select(review.c.rating, review.c.comment, review.c.trainer_id, trainer.c.id, trainer.c.full_name,
+        query = select(review.c.id, review.c.rating, review.c.comment, review.c.trainer_id, trainer.c.id, users.c.name,
                        users.c.name) \
             .where(review.c.trainer_id == trainer_id, trainer.c.id == trainer_id)
 
@@ -243,6 +242,7 @@ async def get_comment(trainer_id: int,
 
         for item in comments:
             comment_dict = {
+                'id': item.id,
                 'user': item.name,
                 'rating': item.rating,
                 'comment': item.comment
@@ -252,7 +252,7 @@ async def get_comment(trainer_id: int,
         return res
 
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.post('/upload-video')
@@ -358,7 +358,7 @@ async def send_notification_news(
 
         }
         res.append(dictjon)
-        print(i)
+
     return res
 
 
@@ -489,7 +489,7 @@ async def download_file(
         return {"success": False, "message": f"{e}"}
 
 
-@router.get('/get-photo/{category_id}')
+@router.get('/get-photo')
 async def download_file(
         category_id: int
 ):
