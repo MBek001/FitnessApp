@@ -190,10 +190,6 @@ async def get_comment(trainer_id: int,
         query = select(review.c.rating, review.c.comment, review.c.trainer_id, trainer.c.id, trainer.c.user_id,  users.c.name , users.c.id) \
             .where(review.c.trainer_id == trainer_id, trainer.c.id == trainer_id, trainer.c.user_id == users.c.id)
 
-        query = select(review.c.id, review.c.rating, review.c.comment, review.c.trainer_id, trainer.c.id, users.c.name,
-                       users.c.name) \
-            .where(review.c.trainer_id == trainer_id, trainer.c.id == trainer_id)
-
         result = await session.execute(query)
         comments = result.all()
 
